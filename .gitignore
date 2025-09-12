@@ -1,0 +1,31 @@
+# ----------------------
+# C++ build artifacts
+# ----------------------
+*.o
+*.obj
+*.so
+*.a
+*.dll
+*.exe
+
+# ----------------------
+# Build directories (CLion / CMake)
+# ----------------------
+cmake-build-*/
+build/
+out/
+
+# ----------------------
+# JetBrains IDE (CLion/IntelliJ)
+# ----------------------
+.idea/*
+# Keep only useful shared configs
+!.idea/codeStyles
+!.idea/runConfigurations
+!.idea/inspectionProfiles
+
+# ----------------------
+# OS-specific
+# ----------------------
+.DS_Store
+Thumbs.db
