@@ -12,4 +12,5 @@ NOTE: You may get a warning that the SDL3 submodule is set to a "detached head."
 ```bash
 git submodule update --init --recursive
 ```
+3. If you're using CLion, it will automatically detect the CMake files and handle the building and running, so there should be no other steps besides pressing run using the CISC220Final configuration.
 
