@@ -5,4 +5,5 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_subdirectory(external/SDL)
+add_subdirectory(external/SDL3_ttf)
 add_subdirectory(src)
