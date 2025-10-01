@@ -28,7 +28,7 @@ public:
    virtual void handleEvent(const SDL_Event &event) = 0;
 };
 
-class TextBox final : public UIElement {
+class TextBox : public UIElement {
    SDL_Texture *texture = nullptr;
    std::string text;
    SDL_Color textColor;
@@ -42,5 +42,7 @@ public:
    void updateCache(SDL_Renderer *renderer, TTF_Font *font) override;
    void handleEvent(const SDL_Event &event) override;
 };
+class Button : public TextBox {
 
+};
 #endif //CISC220FINAL_UI_HPP

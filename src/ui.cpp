@@ -43,9 +43,9 @@ void TextBox::draw(SDL_Renderer *renderer, TTF_Font *font) {
 
 void TextBox::updateCache(SDL_Renderer *renderer, TTF_Font *font) {
     if (this->texture) SDL_DestroyTexture(this->texture);
-    TTF_SetFontSize(font, static_cast<float>(0.75*this->rect.h));
+    TTF_SetFontSize(font, 0.75f*this->rect.h);
     SDL_Surface *surface = TTF_RenderText_Blended_Wrapped(font, this->text.c_str(), this->text.size(), this->textColor,
-        static_cast<int>(0.9*this->rect.w));
+        static_cast<int>(0.95f*this->rect.w));
     this->texture = SDL_CreateTextureFromSurface(renderer, surface);
     SDL_SetTextureScaleMode(this->texture, SDL_SCALEMODE_NEAREST);
     this->textW = static_cast<float>(surface->w);

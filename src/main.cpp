@@ -25,21 +25,40 @@ struct AppState {
     SDL_Renderer *renderer = nullptr;
     std::vector<UIElement*> ui_elements;
     TTF_Font *ui_font = nullptr;
+    float dpiScaleX = 1.0f;
+    float dpiScaleY = 1.0f;
 };
 
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-platform main function
+    // Get output in CLion to work
+    SDL_SetLogOutputFunction([](void *userdata, int category, SDL_LogPriority priority, const char *message){
+        fprintf(stderr, "[SDL] %s\n", message);
+    }, nullptr);
+
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS )) {
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", SDL_GetError(), nullptr);
         return SDL_APP_FAILURE;
     }
     AppState *newstate = new AppState;
 
-    if (!SDL_CreateWindowAndRenderer("CISC220 Final", 800, 450, 0, &newstate->window, &newstate->renderer)) {
+    if (!SDL_CreateWindowAndRenderer("CISC220 Final", 800, 450, SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY, &newstate->window, &newstate->renderer)) {
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", SDL_GetError(), nullptr);
         delete newstate;
         return SDL_APP_FAILURE;
     }
     *appstate = newstate;
+    int winW, winH;
+    SDL_GetWindowSize(newstate->window, &winW, &winH);
+
+    int drawableW, drawableH;
+    SDL_GetRenderOutputSize(newstate->renderer, &drawableW, &drawableH);
+
+    newstate->dpiScaleX = static_cast<float>(drawableW) / winW;
+    newstate->dpiScaleY = static_cast<float>(drawableH) / winH;
+
+    SDL_Log("Logical window %dx%d, Drawable %dx%d, scale=(%f,%f)",
+            winW, winH, drawableW, drawableH,
+            newstate->dpiScaleX, newstate->dpiScaleY);
 
     if (!TTF_Init()) {
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", SDL_GetError(), nullptr);
@@ -59,19 +78,29 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
         {255, 255, 255, 255}, 0, 0.2, 1, 0.2);
     newstate->ui_elements.push_back(title);
 
-    int winW, winH;
-    SDL_GetWindowSize(newstate->window, &winW, &winH);
     for (UIElement *el : newstate->ui_elements) {
-        el->computeBounds(winW, winH);
+        el->computeBounds(drawableW, drawableH);
         el->updateCache(newstate->renderer, newstate->ui_font);
     }
     return SDL_APP_CONTINUE;
 }
 
 SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) { // General event handling function
+    AppState *state = static_cast<AppState*>(appstate);
     switch (event->type) {
         case SDL_EVENT_QUIT:
             return SDL_APP_SUCCESS;
+        case SDL_EVENT_WINDOW_RESIZED:
+        case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED: {
+            int drawableW, drawableH;
+            SDL_GetRenderOutputSize(state->renderer, &drawableW, &drawableH);
+
+            for (UIElement *el : state->ui_elements) {
+                el->computeBounds(drawableW, drawableH);
+                el->updateCache(state->renderer, state->ui_font);
+            }
+            break;
+        }
         default:
             break;
     }
