@@ -1,5 +1,7 @@
 # CISC220 Final
-Wyatt Erwin, Frank Murphy, Maya Perry, Ben Zifcak
+Credits:
+Created by Wyatt Erwin, Frank Murphy, Maya Perry, Ben Zifcak
+UI/Graphics: Frank Murphy
 
 ## Setup Instructions (CLion)
 1. Launch CLion. If you have a project currently open, then close the project to go to CLion's welcome screen. In the top right corner of the screen, click the "Clone Repository" button. In the URL field, paste: ```https://github.com/frankm24/CISC220Final.git```
