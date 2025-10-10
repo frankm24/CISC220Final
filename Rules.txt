@@ -1,0 +1,14 @@
+Rules for MemSweeper
+
+    Single player
+        players are tasked with "freeing" memory.
+        Memory is vizualed as a grid of memory locations and values "locked" (greyed out)
+        Memory is full of different objects and data structures.
+        Players can move through memory by inputing simple commands in the terminal
+        A location in memory is "unlocked" when the player has traversed over it and seen the value stored in it
+        The goal of the game is to traverse through all of memory, unlocking the grid, in the fewest number of moves
+        Moves are displayed in a counter at the top of the board, including players previous high score.
+        Moves include:
+            updating location by one
+            traversing a data structure:
+                
