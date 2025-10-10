@@ -19,6 +19,7 @@ out/
 # JetBrains IDE (CLion/IntelliJ)
 # ----------------------
 .idea/*
+.vscode
 # Keep only useful shared configs
 !.idea/codeStyles
 !.idea/runConfigurations
