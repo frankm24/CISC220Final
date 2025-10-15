@@ -22,7 +22,7 @@ public:
     bool isRevealed() const { return revealed; }
 
 
-    Type getValue(){}
+    Type PrintValue(){}
     bool getComplexity(){}
 
     void display() 
