@@ -7,4 +7,6 @@ class board{
     public: 
     board(int s):size(s){}
     ~board(){}
+    printBoard(){}
+    unlockUnit(){}
 }

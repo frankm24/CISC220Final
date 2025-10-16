@@ -35,3 +35,5 @@ board::printBoard(){
         std::cout<< endl;
     }
 }
+
+board::unlockUnit() // to implement, unlocks whole objecy node when dereferncing a pointer
