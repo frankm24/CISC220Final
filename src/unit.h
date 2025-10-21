@@ -3,14 +3,13 @@ union Type{
     int x;
     char y;
     bool z;
+    int pointer;
 }
 class unit {
     bool revealed = false;
     player *owner = nullptr;
     bool isComplex;
     type value;
-    unit *ptr1?;
-    unit *ptr2?;
 
 public:
     ~unit() {}
