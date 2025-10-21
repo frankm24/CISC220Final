@@ -17,17 +17,8 @@ class player{
         territory.push_back(u);
         u->setOwner(this);
     }
-    void setColor(int r, int g, int b) {
-        color = {r, g, b};
-    }
-    rgb getColor() const {
-        return color;
-    }
-    void incrementTurn() {
-        turns++;
-    }
-    int getTurns() const {
-        return turns;
-    }
-
+    void setColor(int r, int g, int b) {color = {r, g, b};}
+    rgb getColor() const {return color;}
+    void incrementTurn() {turns++;}
+    int getTurns() const {return turns;}
 }

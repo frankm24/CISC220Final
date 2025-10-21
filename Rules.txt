@@ -17,7 +17,17 @@ Rules for MemSweeper
         Once the player has unlocked all locations in the grid they've completed the game and their score is saved
     Multiplayer
         Up to 4 players are placed in random locations on the board // we can build in default buffers so they don't start to close
+        Players are distinguished by the color their territory displays in and user name
         game ends when all units in the grid have been found // I was thinking it doesn't make sense to use turns in multiplayer if were having them win by most territory. this would mean the whole guess function is more of a tool for learning for singleplayer
         The player with the most territory at the end wins
-
+    Terminal
+        Players interact through the board by inputting simple commands in to a terminal
+        commands include:
+            loc++
+            loc = 0Xffffffff // memory address / dereference pointer and unlock whole object
+            loc = endOfArray(loc) // traverses and array starting at inputed memory address and unlocks all members in the array
+            loc = endOfLL(loc) // traverses a linked list and unlocks all nodes attached
+            // we could implement a similar function for binary trees, but they might be too much territory unlocked and are also one way so you can't find the root and will only get youre node down, just something to think about
+            guess X // where X is a data structure. In single player mode players can guess data structures to earn turns back. 
+            //more to implement
                 
