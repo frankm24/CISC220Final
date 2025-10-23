@@ -8,12 +8,10 @@ union Type{
 class unit {
     bool revealed = false;
     player *owner = nullptr;
-    bool isComplex;
     type value;
 
 public:
     ~unit() {}
-    unit(Type v, bool complexity){}
     void setOwner(player *p) { owner = p; }
     player* getOwner() const { return owner; }
 
