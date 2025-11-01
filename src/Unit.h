@@ -4,7 +4,8 @@ using std::string;
 
 class Unit {
     friend class Board;
-    bool is_revealed;
+    friend class Structure;
+    bool isRevealed;
     string data;
     Structure *parent;
 public:

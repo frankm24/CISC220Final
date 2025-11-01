@@ -3,7 +3,8 @@
 using std::string;
 
 class Structure{
-    string length;
+    int length;
+    string type;
     Unit *members[];
 public:
     Structure();
