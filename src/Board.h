@@ -1,5 +1,6 @@
 #include "Unit.h"
 #include "Player.h"
+
 class Board{
     Unit grid[256];
     Player players[4]; //mulitplayer implementation
@@ -7,7 +8,6 @@ class Board{
     int location; //"selected" - "0x##"
     int revealed;
     int moves;
-
 public:
     Board();
     ~Board();
