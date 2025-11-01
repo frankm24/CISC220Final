@@ -1,20 +1,14 @@
 #include "player.h"
+#include <iostream>
+using std::string;
+
 class Unit {
-    bool revealed = false;
-    player *owner = nullptr;
-    string type;
-
+    friend class Board;
+    bool is_revealed;
+    string data;
+    Structure *parent;
 public:
-    ~unit() {}
-    void setOwner(player *p) { owner = p; }
-    player* getOwner() const { return owner; }
-
-    void reveal() { revealed = true; }
-    bool isRevealed() const { return revealed; }
-
-
-    Type PrintValue(){}
-    bool getComplexity(){}
-
-    void display() 
+    Unit();
+    ~Unit();
+    void reveal(); // show pointer in terminal and update reveal
 }; 
