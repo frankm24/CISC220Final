@@ -21,7 +21,6 @@ Rules for MemSweeper
         game ends when all units in the grid have been found // I was thinking it doesn't make sense to use turns in multiplayer if were having them win by most territory. this would mean the whole guess function is more of a tool for learning for singleplayer
         The player with the most territory at the end wins
     Terminal
-
         Players interact through the board by inputting simple commands in to a terminal
         commands include:
             loc++
