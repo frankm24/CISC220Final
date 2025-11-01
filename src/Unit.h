@@ -1,14 +1,8 @@
-#include "player.h" 
-union Type{
-    int x;
-    char y;
-    bool z;
-    int pointer;
-}
-class unit {
+#include "player.h"
+class Unit {
     bool revealed = false;
     player *owner = nullptr;
-    type value;
+    string type;
 
 public:
     ~unit() {}
