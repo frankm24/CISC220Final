@@ -7,12 +7,13 @@
 board::Board() {
     //    srand(static_cast<unsigned>(time(0))); // this is for randomizing the seed at each run so that the random generated boards aren't always generated the same
     Unit grid[256];
-    generateBoard();
+    generateBoard(); // generate board is essentially the constructor function so we may as well implement it in the constructor itself rather than create a helper function
         }
 }
 board::~board(){
     for(int i = 0; i < 256; i++){
-        delete [] grid[i];
+        delete [] grid[i]; // we probably want to call the destructor for unit instead of destroying it this way
+        // we should also think about when to delete the structure objects we create
     }
     delete [] grid;
 }
@@ -44,7 +45,7 @@ int board::unlockObject(int loc) {
     }
 
 }
-/*Implimentation of guess functionality
+/*Implementation of guess functionality
 Allows users to unlock more Units by displaying knowledge of data structure (pseudo code or guess button)
 * displays all Units in the same data structure found after Unit at location loc (need to consider implimentation for DLL, Binary Heap, different or same?)
  */
