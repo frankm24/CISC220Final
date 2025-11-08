@@ -5,8 +5,10 @@ using std::string;
 class Structure{
     int length;
     string type;
-    Unit *members[];
+    Unit** members;
 public:
     Structure();
+    Structure(string tp);
     ~Structure();
+    Structure* generateStructure(string type);
 };

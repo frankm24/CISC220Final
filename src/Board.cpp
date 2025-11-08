@@ -1,45 +1,62 @@
 #include "Unit.h"
-#include "player.h" 
+#include "Player.h" 
 #include "Board.h"
+#include "Structure.h"
+
+#include <iostream>
 #include <cstdlib> // For rand and srand
 #include <ctime> // For time()
 
-board::Board() {
-    //    srand(static_cast<unsigned>(time(0))); // this is for randomizing the seed at each run so that the random generated boards aren't always generated the same
-    Unit grid[256];
-    generateBoard(); // generate board is essentially the constructor function so we may as well implement it in the constructor itself rather than create a helper function
-        }
-}
-board::~board(){
-    for(int i = 0; i < 256; i++){
-        delete [] grid[i]; // we probably want to call the destructor for unit instead of destroying it this way
-        // we should also think about when to delete the structure objects we create
-    }
-    delete [] grid;
+using std::cout;
+using std::endl;
+
+Board::Board() {
+    //    srand(static_cast<unsigned>(time(0))); // this is for randomizing the seed at each run so that the random generated Boards aren't always generated the same
+    my_player = Player(); //selected player on local machine
+    num_revealed = 0;
+    generateBoard(); //populates structures
 }
 
-void board::printBoard(){
+Board::Board(Player player, int revealed) {
+    //    srand(static_cast<unsigned>(time(0))); // this is for randomizing the seed at each run so that the random generated Boards aren't always generated the same
+    my_player = player; //selected player on local machine
+    num_revealed = revealed;
+    generateBoard(); //populates structures
+}
+
+Board::Board(Unit board[], Structure** structs, Player player, int revealed) {
+    //    srand(static_cast<unsigned>(time(0))); // this is for randomizing the seed at each run so that the random generated Boards aren't always generated the same
     for (int i = 0; i<256; i++) {
-        std::cout << grid[i].data << std::endl;
+        grid[i] = board[i];
     }
-}
-/*Updates player location to loc if it's within bounds
- * returns 0 or -1, if it updated player location or not
- */
-int board::movePlayer(int loc) {
-    if (loc < 256) {
-        location = loc;
-        return 0;
-    }
-    return -1;
+    my_player = player; //selected player on local machine
+    num_revealed = revealed;
+    structures = structs;
 }
 
-/*Dereferences in game pointer
- * updates player location to loc on the board
+Board::~Board(){
+    for (int i = 0; structures[i]; i++) {
+        delete structures[i]; // not sure if this is the best way to do this
+    }
+}
+
+void Board::generateBoard() {
+
+}
+
+void Board::printBoard(){
+    for (int i = 0; i<256; i++) {
+        if (i%16==0) cout << endl;
+        cout << grid[i].data << endl;
+    }
+}
+
+/*Dereferences *dereferences is a very confusing word to use for me in this context in game pointer
+ * updates player location to loc on the Board
  * displays all units in the same object
  * returns number of units revealed or -1 if loc is out of bounds
  */
-int board::unlockObject(int loc) {
+int Board::unlockObject(int loc) {
     if (loc > 255 || loc < 0) {
         return -1;
     }
@@ -49,7 +66,7 @@ int board::unlockObject(int loc) {
 Allows users to unlock more Units by displaying knowledge of data structure (pseudo code or guess button)
 * displays all Units in the same data structure found after Unit at location loc (need to consider implimentation for DLL, Binary Heap, different or same?)
  */
-int board::unlockUnit(int loc){
+int Board::unlockUnit(int loc){
 
     int count = 0;
     for(int i = 0; grid[loc]->parent.members[i] != &grid[loc]; i++) { //should stop when unit at loc is found in data structure
