@@ -73,10 +73,28 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
         return SDL_APP_FAILURE;
     }
     // TTF_SetFontHinting(newstate->ui_font,TTF_HINTING_LIGHT_SUBPIXEL);
+    TextBox *squares = new TextBox("b",{255, 255, 255, 255},{255, 255, 255, 255},
+        .1, .1, .8, .8);
+    //Adds squares, a white box that is behind the actual squares.
+    newstate->ui_elements.push_back(squares);
+    newstate->ui_elements.back()->setVisible(false);
+    for (int i = 0; i < 16; i++) {
+        for (int j = 0; j < 16; j++) {
+            TextBox *square = new TextBox("u",{0, 0, 0, 0},{0, 0, 255, 0},
+                (0.1 + (0.05*j)), (0.1 + (0.05 * i)), .05, .05);
+            //Adds a 16x16 grid of squares
+            newstate->ui_elements.push_back(square);
+            newstate->ui_elements.back()->setVisible(false);
+        }
+    }
 
     TextBox *title = new TextBox("Memsweeper", {0, 0, 0, 255},
         {255, 255, 255, 255}, 0, 0.2, 1, 0.2);
     newstate->ui_elements.push_back(title);
+    TextBox *subtitle = new TextBox("Play", {0, 0, 0, 255},
+        {255, 255, 255, 255}, 0.25, 0.5, 0.5, 0.1);
+    //Adds a play button
+    newstate->ui_elements.push_back(subtitle);
 
     for (UIElement *el : newstate->ui_elements) {
         el->computeBounds(drawableW, drawableH);
@@ -100,6 +118,26 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) { // General event 
                 el->updateCache(state->renderer, state->ui_font);
             }
             break;
+        }
+        case SDL_EVENT_MOUSE_BUTTON_DOWN: {
+            /* When the mouse is pressed, the program grabs the location of the mouse, and if it is the same as the
+             * dimensions of the play button (which I manually entered) then it turns the title and the play button
+             * invisible. Then it sets the background(probably unnecessary) and the grid squares to visible. In the
+             * future it would be good to determine if the home menu is still visible before setting the menu to
+             * invisible.
+             */
+            int winW, winH;
+            SDL_GetWindowSize(state->window, &winW, &winH);
+            float x, y;
+            SDL_GetMouseState(&x, &y);
+            if (x/winW >= 0.25 && x/winW < 0.75 && y/winH >= 0.5 && y/winH < 0.6) {
+                state->ui_elements.back()->setVisible(false);
+                state->ui_elements[257]->setVisible(false);
+                state->ui_elements[0]->setVisible(true);
+                for (int i = 1; i < 257; i++) {
+                    state->ui_elements[i]->setVisible(true);
+                }
+            }
         }
         default:
             break;
