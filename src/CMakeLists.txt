@@ -1,4 +1,7 @@
 add_executable(CISC220Final main.cpp
+        Player.cpp
+        Structure.cpp
+        Unit.cpp
         ui.cpp
         murphy_util.cpp
         ../include/murphy_util.hpp)
