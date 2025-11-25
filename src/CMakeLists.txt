@@ -1,5 +1,7 @@
 add_executable(CISC220Final main.cpp
-        ui.cpp)
+        Player.cpp
+        Structure.cpp
+        Unit.cpp)
 target_include_directories(CISC220Final PRIVATE ../include)
 target_link_libraries(CISC220Final PRIVATE SDL3::SDL3 SDL3_ttf::SDL3_ttf)
 

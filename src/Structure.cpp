@@ -24,17 +24,16 @@ Structure::~Structure() {
 
 Structure* Structure::generateStructure(string type) {
     Structure* new_struct = new Structure(type);
-    switch (type) {
-        case "BST":
-            // Code to execute if expression equals value1
-            break; // Exits the switch statement
-        case "DLL":
+    switch (0) {
+        case 0: //"BST"
             break;
-        case "HEAP":
+        case 1: //"DLL"
             break;
-        case "MATRIX":
+        case 2: //"HEAP"
             break;
-        case "GRAPH":
+        case 3: //"MATRIX"
+            break;
+        case 4: //"GRAPH"
             break;
         default:
             break;
