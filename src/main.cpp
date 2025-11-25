@@ -19,15 +19,30 @@ std::string getAssetPath(const std::string &relative) {
     path += "assets/" + relative;
     return path;
 }
-
+enum class UIState { MainMenu, Singleplayer };
 struct AppState {
     SDL_Window *window = nullptr;
     SDL_Renderer *renderer = nullptr;
-    std::vector<UIElement*> ui_elements;
+    std::vector<UIElement*> main_menu_els;
+    std::vector<UIElement*> sp_menu_els;
+    std::vector<UIElement*>* active_els = &main_menu_els;
     TTF_Font *ui_font = nullptr;
     float dpiScaleX = 1.0f;
     float dpiScaleY = 1.0f;
+    int mouseX = 0;
+    int mouseY = 0;
+    UIState ui_state = UIState::MainMenu;
 };
+
+void spOnClick(AppState *appstate) {
+    appstate->active_els = &appstate->sp_menu_els;
+    for (UIElement *el : *appstate->active_els) {
+        int drawableW, drawableH;
+        SDL_GetRenderOutputSize(appstate->renderer, &drawableW, &drawableH);
+        el->computeBounds(drawableW, drawableH);
+        el->updateCache(appstate->renderer, appstate->ui_font);
+    }
+}
 
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-platform main function
     // Get output in CLion to work
@@ -46,6 +61,14 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
         delete newstate;
         return SDL_APP_FAILURE;
     }
+    if (!SDL_SetRenderVSync(newstate->renderer, 1)) {
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", SDL_GetError(), nullptr);
+
+    } else SDL_Log("VSync enabled");
+
+    // VSync avoids from the app looping thousands of times per second by syncing it to the screen's refresh
+    // the game only loops as fast as it needs to do display the UI at your monitor's refresh rate
+    // normally this is a different setting from the game's tick rate but it's not too important right now
     *appstate = newstate;
     int winW, winH;
     SDL_GetWindowSize(newstate->window, &winW, &winH);
@@ -73,12 +96,30 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
         return SDL_APP_FAILURE;
     }
     // TTF_SetFontHinting(newstate->ui_font,TTF_HINTING_LIGHT_SUBPIXEL);
+    TextBox *squares = new TextBox("b",{255, 255, 255, 255},{255, 255, 255, 255},
+        .1, .1, .8, .8);
+    //Adds squares, a white box that is behind the actual squares.
+    newstate->sp_menu_els.push_back(squares);
+    for (int i = 0; i < 16; i++) {
+        for (int j = 0; j < 16; j++) {
+            TextBox *square = new TextBox("u",{0, 0, 0, 0},{0, 0, 255, 0},
+                (0.1 + (0.05*j)), (0.1 + (0.05 * i)), .05, .05);
+            //Adds a 16x16 grid of squares
+            newstate->sp_menu_els.push_back(square);
+        }
+    }
 
-    TextBox *title = new TextBox("Memsweeper", {0, 0, 0, 255},
-        {255, 255, 255, 255}, 0, 0.2, 1, 0.2);
-    newstate->ui_elements.push_back(title);
+    TextBox *title = new TextBox("Memsweeper", {255, 255, 255, 255},
+        {0, 0, 0, 0}, 0, 0.2, 1, 0.2);
+    newstate->main_menu_els.push_back(title);
 
-    for (UIElement *el : newstate->ui_elements) {
+    Button *spButton = new Button("Singleplayer", {255, 255, 255, 255}, {100, 0, 0, 255}, {200, 200, 100, 255}, 0, 0.5, 1, 0.1, spOnClick);
+    newstate->main_menu_els.push_back(spButton);
+    for (UIElement *el : newstate->main_menu_els) {
+        el->computeBounds(drawableW, drawableH);
+        el->updateCache(newstate->renderer, newstate->ui_font);
+    }
+    for (UIElement *el : newstate->sp_menu_els) {
         el->computeBounds(drawableW, drawableH);
         el->updateCache(newstate->renderer, newstate->ui_font);
     }
@@ -87,6 +128,12 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
 
 SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) { // General event handling function
     AppState *state = static_cast<AppState*>(appstate);
+    const float x_win = event->motion.x;
+    const float y_win = event->motion.y;
+    const int x = static_cast<int>(x_win * state->dpiScaleX);
+    const int y = static_cast<int>(y_win * state->dpiScaleY);
+    state->mouseX = x;
+    state->mouseY = y;
     switch (event->type) {
         case SDL_EVENT_QUIT:
             return SDL_APP_SUCCESS;
@@ -95,11 +142,31 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) { // General event 
             int drawableW, drawableH;
             SDL_GetRenderOutputSize(state->renderer, &drawableW, &drawableH);
 
-            for (UIElement *el : state->ui_elements) {
+            for (UIElement *el : *state->active_els) {
                 el->computeBounds(drawableW, drawableH);
                 el->updateCache(state->renderer, state->ui_font);
             }
             break;
+        }
+        case SDL_EVENT_MOUSE_MOTION: {
+            for (UIElement *el : *state->active_els) {
+                if (!el->isVisible()) continue;
+                el->onMouseMotion(x, y);
+            }
+            break;
+        }
+        case SDL_EVENT_MOUSE_BUTTON_DOWN: {
+            for (UIElement *el : *state->active_els) {
+                if (!el->isVisible()) continue;
+                el->onMouseDown(x, y, state);
+            }
+            break;
+        }
+        case SDL_EVENT_MOUSE_BUTTON_UP: {
+            for (UIElement *el : *state->active_els) {
+                if (!el->isVisible()) continue;
+                el->onMouseUp(x, y, state);
+            }
         }
         default:
             break;
@@ -109,11 +176,15 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) { // General event 
 
 SDL_AppResult SDL_AppIterate(void *appstate) { // Runs once every main loop
     AppState *state = static_cast<AppState*>(appstate);
-    SDL_SetRenderDrawColor(state->renderer, 100, 200, 100, 255);
+    SDL_SetRenderDrawColor(state->renderer, 0, 0, 0, 255);
     SDL_RenderClear(state->renderer); // Clears backbuffer, set all pixels to draw color
 
-    for (UIElement* elem : state->ui_elements) {
-        elem->draw(state->renderer, state->ui_font);
+    for (UIElement* el : *state->active_els) {
+        el->draw(state->renderer, state->ui_font);
+        if (Button* btn = dynamic_cast<Button*>(el)) {
+            // el is actually a Button
+            btn->updateEffect(state->mouseX, state->mouseY);
+        }
     }
 
     SDL_RenderPresent(state->renderer); // Displays the buffer we're drawing to on screen
@@ -123,7 +194,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) { // Runs once every main loop
 void SDL_AppQuit(void *appstate, SDL_AppResult result) {
     AppState *state = static_cast<AppState*>(appstate);
     if (state) {
-        for (UIElement* elem : state->ui_elements) {
+        for (UIElement* elem : *state->active_els) {
             delete elem;
         }
         if (state->ui_font) TTF_CloseFont(state->ui_font);
