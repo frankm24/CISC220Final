@@ -21,14 +21,19 @@ public:
    virtual ~UIElement() = default;
 
    void computeBounds(int winW, int winH);
+   bool containsPoint(int px, int py) const;
    void setVisible(bool isVisible);
+   bool isVisible() const;
 
    virtual void draw(SDL_Renderer *renderer, TTF_Font *font) = 0;
    virtual void updateCache(SDL_Renderer *renderer, TTF_Font *font) = 0;
-   virtual void handleEvent(const SDL_Event &event) = 0;
+   virtual void onMouseMotion(int x, int y) {}
+   virtual void onMouseDown(int x, int y) {}
+   virtual void onMouseUp(int x, int y) {}
 };
 
 class TextBox : public UIElement {
+protected:
    SDL_Texture *texture = nullptr;
    std::string text;
    SDL_Color textColor;
@@ -40,9 +45,25 @@ public:
 
    void draw(SDL_Renderer *renderer, TTF_Font *font) override;
    void updateCache(SDL_Renderer *renderer, TTF_Font *font) override;
-   void handleEvent(const SDL_Event &event) override;
 };
 class Button : public TextBox {
-
+public:
+   static constexpr Uint64 CLICK_EFFECT_DURATION_MS = 120;
+   enum class ButtonState { Idle, Hovered, Down, Clicked };
+   Button(std::string text, SDL_Color textColor, SDL_Color backgroundColor, SDL_Color hoverColor, float xScale,
+      float yScale, float wScale, float hScale);
+   void draw(SDL_Renderer *renderer, TTF_Font *font) override;
+   void onMouseMotion(int x, int y) override;
+   void onMouseDown(int x, int y) override;
+   void onMouseUp(int x, int y) override;
+   void updateEffect(int x, int y);
+   void onPressImmediate();
+   void onPress();
+   ButtonState getState();
+private:
+   ButtonState state;
+   Uint64 clickEffectStart = 0;
+   SDL_Color hoverColor{};
+   SDL_Color pressedColor{};
 };
 #endif //CISC220FINAL_UI_HPP
