@@ -87,8 +87,10 @@ void TextBox::updateCache(SDL_Renderer *renderer, TTF_Font *font) {
 }
 
 Button::Button(std::string text, SDL_Color textColor, SDL_Color backgroundColor, SDL_Color hoverColor, float xScale,
-    float yScale, float wScale, float hScale) : TextBox(text, textColor, backgroundColor, xScale, yScale, wScale,
+    float yScale, float wScale, float hScale, Callback onClick, Callback onPressImmediate) : TextBox(text, textColor, backgroundColor, xScale, yScale, wScale,
         hScale) {
+    this->fnOnClick = std::move(onClick);
+    this->fnOnPressImmediate = std::move(onPressImmediate);
     this->hoverColor = hoverColor;
     float hoverL = luminance(hoverColor);
     if (hoverL > 128.0f) {
@@ -138,28 +140,30 @@ void Button::onMouseMotion(int x, int y) {
         this->state = ButtonState::Idle;
 }
 
-void Button::onPress() {
+void Button::onPress(AppState *appstate) {
+    if (fnOnClick) fnOnClick(appstate);
     SDL_Log("full press");
 }
 
-void Button::onPressImmediate() {
+void Button::onPressImmediate(AppState *appstate) {
+    if (fnOnPressImmediate) fnOnPressImmediate(appstate);
     SDL_Log("press immediate");
 }
 
-void Button::onMouseDown(int x, int y) {
+void Button::onMouseDown(int x, int y, AppState *appstate) {
     if (this->containsPoint(x, y)) {
         this->state = ButtonState::Down;
-        this->onPressImmediate();
+        this->onPressImmediate(appstate);
         // Allows instant feedback before the actual click,
         // combines Carmack strategy with traditional UI
     }
 }
 
-void Button::onMouseUp(int x, int y) {
+void Button::onMouseUp(int x, int y, AppState *appstate) {
     if (this->state == ButtonState::Down && this->containsPoint(x, y)) {
         this->state = ButtonState::Clicked;
         this->clickEffectStart = SDL_GetTicks();
-        this->onPress();
+        this->onPress(appstate);
     }
 }
 

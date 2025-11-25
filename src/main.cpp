@@ -19,17 +19,30 @@ std::string getAssetPath(const std::string &relative) {
     path += "assets/" + relative;
     return path;
 }
-
+enum class UIState { MainMenu, Singleplayer };
 struct AppState {
     SDL_Window *window = nullptr;
     SDL_Renderer *renderer = nullptr;
-    std::vector<UIElement*> ui_elements;
+    std::vector<UIElement*> main_menu_els;
+    std::vector<UIElement*> sp_menu_els;
+    std::vector<UIElement*>* active_els = &main_menu_els;
     TTF_Font *ui_font = nullptr;
     float dpiScaleX = 1.0f;
     float dpiScaleY = 1.0f;
     int mouseX = 0;
     int mouseY = 0;
+    UIState ui_state = UIState::MainMenu;
 };
+
+void spOnClick(AppState *appstate) {
+    appstate->active_els = &appstate->sp_menu_els;
+    for (UIElement *el : *appstate->active_els) {
+        int drawableW, drawableH;
+        SDL_GetRenderOutputSize(appstate->renderer, &drawableW, &drawableH);
+        el->computeBounds(drawableW, drawableH);
+        el->updateCache(appstate->renderer, appstate->ui_font);
+    }
+}
 
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-platform main function
     // Get output in CLion to work
@@ -86,25 +99,27 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
     TextBox *squares = new TextBox("b",{255, 255, 255, 255},{255, 255, 255, 255},
         .1, .1, .8, .8);
     //Adds squares, a white box that is behind the actual squares.
-    newstate->ui_elements.push_back(squares);
-    newstate->ui_elements.back()->setVisible(false);
+    newstate->sp_menu_els.push_back(squares);
     for (int i = 0; i < 16; i++) {
         for (int j = 0; j < 16; j++) {
             TextBox *square = new TextBox("u",{0, 0, 0, 0},{0, 0, 255, 0},
                 (0.1 + (0.05*j)), (0.1 + (0.05 * i)), .05, .05);
             //Adds a 16x16 grid of squares
-            newstate->ui_elements.push_back(square);
-            newstate->ui_elements.back()->setVisible(false);
+            newstate->sp_menu_els.push_back(square);
         }
     }
 
     TextBox *title = new TextBox("Memsweeper", {255, 255, 255, 255},
         {0, 0, 0, 0}, 0, 0.2, 1, 0.2);
-    newstate->ui_elements.push_back(title);
+    newstate->main_menu_els.push_back(title);
 
-    Button *spButton = new Button("Singleplayer", {255, 255, 255, 255}, {100, 0, 0, 255}, {200, 200, 100, 255}, 0, 0.5, 1, 0.1);
-    newstate->ui_elements.push_back(spButton);
-    for (UIElement *el : newstate->ui_elements) {
+    Button *spButton = new Button("Singleplayer", {255, 255, 255, 255}, {100, 0, 0, 255}, {200, 200, 100, 255}, 0, 0.5, 1, 0.1, spOnClick);
+    newstate->main_menu_els.push_back(spButton);
+    for (UIElement *el : newstate->main_menu_els) {
+        el->computeBounds(drawableW, drawableH);
+        el->updateCache(newstate->renderer, newstate->ui_font);
+    }
+    for (UIElement *el : newstate->sp_menu_els) {
         el->computeBounds(drawableW, drawableH);
         el->updateCache(newstate->renderer, newstate->ui_font);
     }
@@ -127,30 +142,30 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) { // General event 
             int drawableW, drawableH;
             SDL_GetRenderOutputSize(state->renderer, &drawableW, &drawableH);
 
-            for (UIElement *el : state->ui_elements) {
+            for (UIElement *el : *state->active_els) {
                 el->computeBounds(drawableW, drawableH);
                 el->updateCache(state->renderer, state->ui_font);
             }
             break;
         }
         case SDL_EVENT_MOUSE_MOTION: {
-            for (UIElement *el : state->ui_elements) {
+            for (UIElement *el : *state->active_els) {
                 if (!el->isVisible()) continue;
                 el->onMouseMotion(x, y);
             }
             break;
         }
         case SDL_EVENT_MOUSE_BUTTON_DOWN: {
-            for (UIElement *el : state->ui_elements) {
+            for (UIElement *el : *state->active_els) {
                 if (!el->isVisible()) continue;
-                el->onMouseDown(x, y);
+                el->onMouseDown(x, y, state);
             }
             break;
         }
         case SDL_EVENT_MOUSE_BUTTON_UP: {
-            for (UIElement *el : state->ui_elements) {
+            for (UIElement *el : *state->active_els) {
                 if (!el->isVisible()) continue;
-                el->onMouseUp(x, y);
+                el->onMouseUp(x, y, state);
             }
         }
         default:
@@ -164,7 +179,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) { // Runs once every main loop
     SDL_SetRenderDrawColor(state->renderer, 0, 0, 0, 255);
     SDL_RenderClear(state->renderer); // Clears backbuffer, set all pixels to draw color
 
-    for (UIElement* el : state->ui_elements) {
+    for (UIElement* el : *state->active_els) {
         el->draw(state->renderer, state->ui_font);
         if (Button* btn = dynamic_cast<Button*>(el)) {
             // el is actually a Button
@@ -179,7 +194,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) { // Runs once every main loop
 void SDL_AppQuit(void *appstate, SDL_AppResult result) {
     AppState *state = static_cast<AppState*>(appstate);
     if (state) {
-        for (UIElement* elem : state->ui_elements) {
+        for (UIElement* elem : *state->active_els) {
             delete elem;
         }
         if (state->ui_font) TTF_CloseFont(state->ui_font);
