@@ -82,6 +82,21 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
         delete newstate;
         return SDL_APP_FAILURE;
     }
+    // TTF_SetFontHinting(newstate->ui_font,TTF_HINTING_LIGHT_SUBPIXEL);
+    TextBox *squares = new TextBox("b",{255, 255, 255, 255},{255, 255, 255, 255},
+        .1, .1, .8, .8);
+    //Adds squares, a white box that is behind the actual squares.
+    newstate->ui_elements.push_back(squares);
+    newstate->ui_elements.back()->setVisible(false);
+    for (int i = 0; i < 16; i++) {
+        for (int j = 0; j < 16; j++) {
+            TextBox *square = new TextBox("u",{0, 0, 0, 0},{0, 0, 255, 0},
+                (0.1 + (0.05*j)), (0.1 + (0.05 * i)), .05, .05);
+            //Adds a 16x16 grid of squares
+            newstate->ui_elements.push_back(square);
+            newstate->ui_elements.back()->setVisible(false);
+        }
+    }
 
     TextBox *title = new TextBox("Memsweeper", {255, 255, 255, 255},
         {0, 0, 0, 0}, 0, 0.2, 1, 0.2);
