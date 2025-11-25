@@ -3,6 +3,7 @@
 #define SDL_MAIN_USE_CALLBACKS
 #include <vector>
 
+#include "murphy_util.hpp"
 #include "ui.hpp"
 #include "SDL3/SDL_main.h"
 
@@ -107,6 +108,17 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
             //Adds a 16x16 grid of squares
             newstate->sp_menu_els.push_back(square);
         }
+    }
+    // Labels
+    for (int i = 0; i < 16; i++) {
+        TextBox *square = new TextBox(std::string() + toHexDigit(i),{255, 255, 255, 0},{0, 0, 0, 0},
+            (0.05), (0.85 - (0.05 * i)), .05, .05);
+        newstate->sp_menu_els.push_back(square);
+    }
+    for (int i = 0; i < 16; i++) {
+        TextBox *square = new TextBox(std::string() + toHexDigit(i),{255, 255, 255, 0},{0, 0, 0, 0},
+            (0.1 + (0.05*i)), 0.9, .05, .05);
+        newstate->sp_menu_els.push_back(square);
     }
 
     TextBox *title = new TextBox("Memsweeper", {255, 255, 255, 255},

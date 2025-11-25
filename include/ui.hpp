@@ -49,7 +49,6 @@ public:
    void draw(SDL_Renderer *renderer, TTF_Font *font) override;
    void updateCache(SDL_Renderer *renderer, TTF_Font *font) override;
 };
-struct AppState;
 class Button : public TextBox {
    using Callback = std::function<void(AppState*)>;
 public:
