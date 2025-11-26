@@ -16,4 +16,7 @@ float luminance(SDL_Color c);
 // Adjust brightness by a factor (<1 = darker, >1 = lighter)
 SDL_Color adjustBrightness(SDL_Color c, float factor);
 
+// Return a character representing the hex digit of an integer from [0, 15]. Returns ? for an invalid int.
+char toHexDigit(int n);
+
 #endif //CISC220FINAL_MURPHY_UTIL_HPP

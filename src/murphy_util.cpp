@@ -27,3 +27,8 @@ SDL_Color adjustBrightness(const SDL_Color c, const float factor) {
     out.a = c.a;
     return out;
 }
+
+char toHexDigit(const int n) {
+    if (n < 0 || n > 15) return '?';
+    return (n < 10) ? ('0' + n) : ('A' + (n - 10));
+}
