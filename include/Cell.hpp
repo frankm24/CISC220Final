@@ -1,11 +1,12 @@
 #ifndef CISC220FINAL_UNIT_H
 #define CISC220FINAL_UNIT_H
 
-#include "Player.hpp"
 #include <iostream>
 
-
 using std::string;
+
+class Structure;
+class Board;
 
 class Cell {
     friend class Board;

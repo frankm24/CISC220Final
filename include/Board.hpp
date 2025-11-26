@@ -1,9 +1,7 @@
 #ifndef CISC220FINAL_BOARD_H
 #define CISC220FINAL_BOARD_H
-#include "Cell.hpp"
-#include "../include/Player.hpp"
 
-class Board{
+class Board {
     friend class Player;
     friend class Cell;
     Cell grid[256];

@@ -8,7 +8,6 @@
 #include <string>
 
 #include "../external/SDL3_ttf/include/SDL3_ttf/SDL_ttf.h"
-#include "SDL3/SDL_events.h"
 #include "SDL3/SDL_pixels.h"
 
 struct AppState;

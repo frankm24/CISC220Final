@@ -1,6 +1,7 @@
 #pragma once
 #include <iostream>
-#include "Cell.hpp"
+
+class Cell;
 using std::string;
 
 class Structure{
