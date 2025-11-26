@@ -1,24 +1,24 @@
 #include <iostream>
-#include "Unit.h"
-#include "Structure.h"
+#include "../include/Cell.hpp"
+#include "../include/Structure.hpp"
 
-Unit::Unit() {
+Cell::Cell() {
     data = "";
     parent = nullptr;
     isRevealed = false;
 }
 
-Unit::Unit(string value, Structure *s, bool revealed ) {
+Cell::Cell(string value, Structure *s, bool revealed ) {
     data = value;
     parent = s;
     isRevealed = revealed;
 }
 
-Unit::~Unit() {
+Cell::~Cell() {
  // not sure if this is necessary yet
 }
 
-void Unit::reveal() {
+void Cell::reveal() {
 
 }
 

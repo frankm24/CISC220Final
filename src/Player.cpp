@@ -2,7 +2,7 @@
 // Created by Maya on 11/3/2025.
 //
 
-#include "Player.h"
+#include "../include/Player.hpp"
 
 
 Player::Player() {

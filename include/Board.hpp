@@ -1,10 +1,12 @@
-#include "Unit.h"
-#include "Player.h"
 #ifndef CISC220FINAL_BOARD_H
 #define CISC220FINAL_BOARD_H
+#include "Cell.hpp"
+#include "../include/Player.hpp"
+
 class Board{
     friend class Player;
-    Unit grid[256];
+    friend class Cell;
+    Cell grid[256];
     Player my_player; //selected player on local machine
     //Player players[4]; //mulitplayer implementation
     int num_revealed;
@@ -12,10 +14,12 @@ class Board{
 public:
     Board();
     Board(Player player, int revealed);
-    Board(Unit board[], Structure** structs, Player player, int revealed);
+    Board(Cell board[], Structure** structs, Player player, int revealed);
     ~Board();
+    void generateDefault();
     void generateBoard();
     void printBoard();
+    int unlockObject(int loc);
     int unlockUnit(int loc);
 };
 

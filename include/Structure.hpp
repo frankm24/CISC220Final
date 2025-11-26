@@ -1,11 +1,13 @@
+#pragma once
 #include <iostream>
-#include "Unit.h"
+#include "Cell.hpp"
 using std::string;
 
 class Structure{
+    friend class Board;
     int length;
     string type;
-    Unit** members;
+    Cell** members;
 public:
     Structure();
     Structure(string tp);

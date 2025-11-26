@@ -1,10 +1,10 @@
 add_executable(CISC220Final main.cpp
         Player.cpp
         Structure.cpp
-        Unit.cpp
+        Cell.cpp
         ui.cpp
         murphy_util.cpp
-        ../include/murphy_util.hpp)
+        Board.cpp)
 target_include_directories(CISC220Final PRIVATE ../include)
 target_link_libraries(CISC220Final PRIVATE SDL3::SDL3 SDL3_ttf::SDL3_ttf)
 

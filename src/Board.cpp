@@ -1,7 +1,7 @@
-#include "Unit.h"
-#include "Player.h" 
-#include "Board.h"
-#include "Structure.h"
+#include "../include/Cell.hpp"
+#include "Player.hpp"
+#include "../include/Board.hpp"
+#include "../include/Structure.hpp"
 
 #include <iostream>
 #include <cstdlib> // For rand and srand
@@ -9,6 +9,25 @@
 
 using std::cout;
 using std::endl;
+
+Structure** defaultStructs = {};
+Cell defaultGrid[256] = {
+    Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),
+    Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),
+    Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),
+    Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),
+    Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),
+    Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),
+    Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),
+    Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),    Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),
+    Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),
+    Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),
+    Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),
+    Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),
+    Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),
+    Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),
+    Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),Cell(),Cell(), Cell(), Cell(),
+};
 
 Board::Board() {
     //    srand(static_cast<unsigned>(time(0))); // this is for randomizing the seed at each run so that the random generated Boards aren't always generated the same
@@ -24,7 +43,7 @@ Board::Board(Player player, int revealed) {
     generateBoard(); //populates structures
 }
 
-Board::Board(Unit board[], Structure** structs, Player player, int revealed) {
+Board::Board(Cell board[], Structure** structs, Player player, int revealed) {
     //    srand(static_cast<unsigned>(time(0))); // this is for randomizing the seed at each run so that the random generated Boards aren't always generated the same
     for (int i = 0; i<256; i++) {
         grid[i] = board[i];
@@ -38,6 +57,11 @@ Board::~Board(){
     for (int i = 0; structures[i]; i++) {
         delete structures[i]; // not sure if this is the best way to do this
     }
+}
+
+
+void Board::generateDefault() {
+    Board* sampleBoard = new Board(defaultGrid, defaultStructs, Player(), 1);
 }
 
 void Board::generateBoard() {
@@ -57,9 +81,9 @@ void Board::printBoard(){
  * returns number of units revealed or -1 if loc is out of bounds
  */
 int Board::unlockObject(int loc) {
-    if (loc > 255 || loc < 0) {
-        return -1;
-    }
+     if (loc > 255 || loc < 0) {
+         return -1;
+     }
 
 }
 /*Implementation of guess functionality
@@ -69,11 +93,11 @@ Allows users to unlock more Units by displaying knowledge of data structure (pse
 int Board::unlockUnit(int loc){
 
     int count = 0;
-    for(int i = 0; grid[loc]->parent.members[i] != &grid[loc]; i++) { //should stop when unit at loc is found in data structure
-        for ( int j = i; j < grid[loc]->parent.length; j++ ) {
+    for(int i = 0; grid[loc].parent->members[i] != &grid[loc]; i++) { //should stop when unit at loc is found in data structure
+        for ( int j = i; j < grid[loc].parent->length; j++ ) {
             //iterates through remaining members
-            grid[loc]->parent.members[j].isRevealed = true;
-            count ++:
+            grid[loc].parent->members[j]->isRevealed = true;
+            count ++;
         }
     }
     return count;

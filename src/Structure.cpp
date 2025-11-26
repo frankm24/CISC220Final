@@ -1,7 +1,7 @@
 //
 // Created by Maya on 11/4/2025.
 //
-#include "Structure.h"
+#include "../include/Structure.hpp"
 
 
 Structure::Structure() {
