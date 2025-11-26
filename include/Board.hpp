@@ -2,6 +2,8 @@
 #define CISC220FINAL_BOARD_H
 #include "Cell.hpp"
 #include "../include/Player.hpp"
+#include <vector>
+using std::vector;
 
 class Board{
     friend class Player;
@@ -10,11 +12,11 @@ class Board{
     Player my_player; //selected player on local machine
     //Player players[4]; //mulitplayer implementation
     int num_revealed;
-    Structure** structures;
+    vector<Structure*> structures;
 public:
     Board();
     Board(Player player, int revealed);
-    Board(Cell board[], Structure** structs, Player player, int revealed);
+    Board(Cell board[], vector<Structure*> structs, Player player, int revealed);
     ~Board();
     void generateDefault();
     void generateBoard();
