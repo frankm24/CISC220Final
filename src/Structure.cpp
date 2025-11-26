@@ -3,6 +3,8 @@
 //
 #include "../include/Structure.hpp"
 
+#include "Cell.hpp"
+
 
 Structure::Structure() {
     size = 0;
