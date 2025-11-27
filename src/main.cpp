@@ -98,13 +98,13 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
     }
     // TTF_SetFontHinting(newstate->ui_font,TTF_HINTING_LIGHT_SUBPIXEL);
     TextBox *squares = new TextBox("b",{255, 255, 255, 255},{255, 255, 255, 255},
-        .1, .1, .8, .8);
+        .06, .1, .48, .8);
     //Adds squares, a white box that is behind the actual squares.
     newstate->sp_menu_els.push_back(squares);
     for (int i = 0; i < 16; i++) {
         for (int j = 0; j < 16; j++) {
             TextBox *square = new TextBox("u",{0, 0, 0, 0},{0, 0, 255, 0},
-                (0.1 + (0.05*j)), (0.1 + (0.05 * i)), .05, .05);
+                (0.06 + (0.03*j)), (0.1 + (0.05 * i)), .03, .05);
             //Adds a 16x16 grid of squares
             newstate->sp_menu_els.push_back(square);
         }
@@ -112,14 +112,25 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
     // Labels
     for (int i = 0; i < 16; i++) {
         TextBox *square = new TextBox(std::string() + toHexDigit(i),{255, 255, 255, 0},{0, 0, 0, 0},
-            (0.05), (0.85 - (0.05 * i)), .05, .05);
+            (0.01), (0.85 - (0.05 * i)), .05, .05);
         newstate->sp_menu_els.push_back(square);
     }
     for (int i = 0; i < 16; i++) {
         TextBox *square = new TextBox(std::string() + toHexDigit(i),{255, 255, 255, 0},{0, 0, 0, 0},
-            (0.1 + (0.05*i)), 0.9, .05, .05);
+            (0.06 + (0.03*i)), 0.9, .03, .05);
         newstate->sp_menu_els.push_back(square);
     }
+    TextBox *terminalLabel = new TextBox("Terminal:", {255, 255, 255, 0}, {0, 0, 0, 0},
+        .6, .1, .35, .05);
+    newstate->sp_menu_els.push_back(terminalLabel);
+
+    Terminal *terminal = new Terminal({255, 255, 255, 0}, {0, 0, 0, 0},
+        .6, .13, .35, .4, 13);
+    for (int i = 0; i < 13; i++) {
+        terminal->addLine("Identified hashmap");
+        newstate->sp_menu_els.push_back(terminal->getLine(i));
+    }
+    terminal->addLine("Identified array");
 
     TextBox *title = new TextBox("Memsweeper", {255, 255, 255, 255},
         {0, 0, 0, 0}, 0, 0.2, 1, 0.2);

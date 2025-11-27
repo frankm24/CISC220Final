@@ -47,6 +47,19 @@ public:
 
    void draw(SDL_Renderer *renderer, TTF_Font *font) override;
    void updateCache(SDL_Renderer *renderer, TTF_Font *font) override;
+   std::string getText() const;
+   void setText(std::string text);
+};
+class Terminal {
+protected:
+   SDL_Color textColor;
+   int numitems;
+   std::vector<TextBox*> textBoxes;
+public:
+   Terminal(SDL_Color textColor, SDL_Color backgroundColor, float xScale, float yScale, float wScale,
+    float hScale, int numItems);
+   void addLine(std::string text);
+   TextBox *getLine(int index);
 };
 class Button : public TextBox {
    using Callback = std::function<void(AppState*)>;

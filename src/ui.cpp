@@ -3,6 +3,7 @@
 //
 
 #include "ui.hpp"
+#include <cmath>
 
 #include "murphy_util.hpp"
 
@@ -84,6 +85,38 @@ void TextBox::updateCache(SDL_Renderer *renderer, TTF_Font *font) {
     this->textW = static_cast<float>(surface->w);
     this->textH = static_cast<float>(surface->h);
     SDL_DestroySurface(surface);
+}
+
+std::string TextBox::getText() const {
+    return this->text;
+}
+
+void TextBox::setText(std::string text) {
+    this->text = std::move(text);
+}
+
+Terminal::Terminal(SDL_Color textColor, SDL_Color backgroundColor, float xScale, float yScale, float wScale,
+    float hScale, int numItems) : textColor(textColor),
+        numitems(numItems) {
+    std::vector<TextBox*> textBoxes = {};
+    this->textBoxes = textBoxes;
+    for (int i = 0; i < numItems; i++) {
+        this->textBoxes.push_back(new TextBox("", textColor, backgroundColor, xScale,
+            yScale + hScale - (float)i * (hScale/(float)numItems), wScale, hScale/(float)numItems));
+    }
+}
+
+void Terminal::addLine(std::string text) {
+    std::string old;
+    for (int i = 0; i < textBoxes.size(); i++) {
+        old = textBoxes[i]->getText();
+        textBoxes[i]->setText(std::move(text));
+        text = old;
+    }
+}
+
+TextBox *Terminal::getLine(int index) {
+    return textBoxes[index];
 }
 
 Button::Button(std::string text, SDL_Color textColor, SDL_Color backgroundColor, SDL_Color hoverColor, float xScale,
