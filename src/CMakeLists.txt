@@ -5,8 +5,11 @@ add_executable(CISC220Final main.cpp
         ui.cpp
         murphy_util.cpp
         Board.cpp)
-target_include_directories(CISC220Final PRIVATE ../include)
+target_include_directories(CISC220Final PRIVATE ../include
+        ../external/boost_1_89_0
+)
 target_link_libraries(CISC220Final PRIVATE SDL3::SDL3 SDL3_ttf::SDL3_ttf)
+
 
 add_custom_command(
         TARGET CISC220Final POST_BUILD

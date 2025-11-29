@@ -6,6 +6,7 @@
 #define CISC220FINAL_UI_HPP
 #include <functional>
 #include <string>
+#include <boost/circular_buffer.hpp>
 
 #include "../external/SDL3_ttf/include/SDL3_ttf/SDL_ttf.h"
 #include "SDL3/SDL_pixels.h"
@@ -40,9 +41,10 @@ protected:
    std::string text;
    SDL_Color textColor;
    float textW = 0, textH = 0;
+   int fixedFontSize;
 public:
    TextBox(std::string text, SDL_Color textColor, SDL_Color backgroundColor, float xScale, float yScale, float wScale,
-      float hScale);
+      float hScale, int fontSize = 0);
    ~TextBox() override;
 
    void draw(SDL_Renderer *renderer, TTF_Font *font) override;
@@ -53,13 +55,15 @@ public:
 class Terminal {
 protected:
    SDL_Color textColor;
-   int numitems;
-   std::vector<TextBox*> textBoxes;
+   int numItems;
+   TextBox** textBoxes;
+   boost::circular_buffer<std::string> commandHistory;
 public:
    Terminal(SDL_Color textColor, SDL_Color backgroundColor, float xScale, float yScale, float wScale,
     float hScale, int numItems);
    void addLine(std::string text);
    TextBox *getLine(int index);
+   void updateCache(SDL_Renderer *renderer, TTF_Font *font);
 };
 class Button : public TextBox {
    using Callback = std::function<void(AppState*)>;
@@ -83,5 +87,18 @@ private:
    SDL_Color pressedColor{};
    Callback fnOnClick;
    Callback fnOnPressImmediate;
+};
+class TerminalInput final : public TextBox {
+   using Callback = std::function<std::string(std::string)>;
+   std::string inputText;
+   std::string staticText;
+   Terminal *terminal;
+public:
+   TerminalInput(std::string text, SDL_Color textColor, SDL_Color backgroundColor, float xScale, float yScale, float wScale,
+      float hScale, Terminal *terminal);
+   Callback commandParser; // Should return the command's "output" string to be saved to the commandHistory
+   void addChars(const char *text);
+   void handleBackspace();
+   void parseCommand();
 };
 #endif //CISC220FINAL_UI_HPP

@@ -1,3 +1,6 @@
+# External
+external/boost_1_89_0/
+
 # ----------------------
 # C++ build artifacts
 # ----------------------

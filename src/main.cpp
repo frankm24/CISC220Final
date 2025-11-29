@@ -26,7 +26,9 @@ struct AppState {
     SDL_Renderer *renderer = nullptr;
     std::vector<UIElement*> main_menu_els;
     std::vector<UIElement*> sp_menu_els;
-    std::vector<UIElement*>* active_els = &main_menu_els;
+    std::vector<UIElement*> *active_els = &main_menu_els;
+    TerminalInput *terminalInput;
+    Terminal *terminal;
     TTF_Font *ui_font = nullptr;
     float dpiScaleX = 1.0f;
     float dpiScaleY = 1.0f;
@@ -35,14 +37,19 @@ struct AppState {
     UIState ui_state = UIState::MainMenu;
 };
 
-void spOnClick(AppState *appstate) {
-    appstate->active_els = &appstate->sp_menu_els;
-    for (UIElement *el : *appstate->active_els) {
+void spOnClick(AppState *state) {
+    state->active_els = &state->sp_menu_els;
+    for (UIElement *el : *state->active_els) {
         int drawableW, drawableH;
-        SDL_GetRenderOutputSize(appstate->renderer, &drawableW, &drawableH);
+        SDL_GetRenderOutputSize(state->renderer, &drawableW, &drawableH);
         el->computeBounds(drawableW, drawableH);
-        el->updateCache(appstate->renderer, appstate->ui_font);
+        el->updateCache(state->renderer, state->ui_font);
     }
+    SDL_StartTextInput(state->window);
+}
+
+std::string parseCommand(std::string command) {
+    return "Successfully did thing";
 }
 
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-platform main function
@@ -57,11 +64,12 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
     }
     AppState *newstate = new AppState;
 
-    if (!SDL_CreateWindowAndRenderer("CISC220 Final", 800, 450, SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY, &newstate->window, &newstate->renderer)) {
+    if (!SDL_CreateWindowAndRenderer("CISC220 Final", 1280, 720, SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY, &newstate->window, &newstate->renderer)) {
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", SDL_GetError(), nullptr);
         delete newstate;
         return SDL_APP_FAILURE;
     }
+    SDL_SetWindowMinimumSize(newstate->window, 1280, 720);
     if (!SDL_SetRenderVSync(newstate->renderer, 1)) {
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", SDL_GetError(), nullptr);
 
@@ -124,13 +132,20 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
         .6, .1, .35, .05);
     newstate->sp_menu_els.push_back(terminalLabel);
 
+    int numItems = 12;
     Terminal *terminal = new Terminal({255, 255, 255, 0}, {0, 0, 0, 0},
-        .6, .13, .35, .4, 13);
-    for (int i = 0; i < 13; i++) {
+        .6, .13, .35, .4, numItems);
+    newstate->terminal = terminal;
+    for (int i = 0; i < numItems; i++) {
         terminal->addLine("Identified hashmap");
         newstate->sp_menu_els.push_back(terminal->getLine(i));
     }
     terminal->addLine("Identified array");
+    TerminalInput *inputBox = new TerminalInput("player$ ", {255, 255, 255, 0},
+        {0, 0, 0, 0}, .6, .6, .35, .05, terminal);
+    inputBox->commandParser = parseCommand;
+    newstate->sp_menu_els.push_back(inputBox);
+    newstate->terminalInput = inputBox;
 
     TextBox *title = new TextBox("Memsweeper", {255, 255, 255, 255},
         {0, 0, 0, 0}, 0, 0.2, 1, 0.2);
@@ -146,6 +161,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
         el->computeBounds(drawableW, drawableH);
         el->updateCache(newstate->renderer, newstate->ui_font);
     }
+
     return SDL_APP_CONTINUE;
 }
 
@@ -190,7 +206,25 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) { // General event 
                 if (!el->isVisible()) continue;
                 el->onMouseUp(x, y, state);
             }
+            break;
         }
+        case SDL_EVENT_TEXT_INPUT: {
+            state->terminalInput->addChars(event->text.text);
+            state->terminalInput->updateCache(state->renderer, state->ui_font);
+            break;
+        }
+        case SDL_EVENT_KEY_DOWN:
+            if (state->active_els == &state->sp_menu_els) {
+                if (event->key.key == SDLK_BACKSPACE) {
+                    state->terminalInput->handleBackspace();
+                }
+                else if (event->key.key == SDLK_RETURN) {
+                    state->terminalInput->parseCommand();
+                    state->terminal->updateCache(state->renderer, state->ui_font);
+                }
+                state->terminalInput->updateCache(state->renderer, state->ui_font);
+            }
+            break;
         default:
             break;
     }
@@ -205,7 +239,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) { // Runs once every main loop
     for (UIElement* el : *state->active_els) {
         el->draw(state->renderer, state->ui_font);
         if (Button* btn = dynamic_cast<Button*>(el)) {
-            // el is actually a Button
+            // el is actually a Button, so we can do its animation effect
             btn->updateEffect(state->mouseX, state->mouseY);
         }
     }
