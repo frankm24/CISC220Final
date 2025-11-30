@@ -147,6 +147,7 @@ Terminal::Terminal(SDL_Color text_color, SDL_Color background_color, float x_sca
             .backgroundColor(background_color)
             .text("")
             .textColor(text_color)
+            .alignX(TextAlignment::Left)
             .build();
     }
 }
@@ -352,11 +353,13 @@ TerminalInput::TerminalInput(float x_scale, float y_scale, float w_scale, float 
     static_text_(text), terminal_(terminal) {}
 
 void TerminalInput::addChars(const char *text) {
+    typing_timestamp_ = SDL_GetTicks();
     input_text_ += std::string(text);
     text_ = static_text_ + input_text_;
 }
 
 void TerminalInput::handleBackspace() {
+    typing_timestamp_ = SDL_GetTicks();
     if (!input_text_.empty()) input_text_.pop_back();
     text_ = static_text_ + input_text_;
 }
@@ -370,6 +373,42 @@ void TerminalInput::parseCommand() {
         terminal_->addLine(output);
     }
 }
+
+void TerminalInput::draw(SDL_Renderer *renderer, TTF_Font *font) {
+    if (!visible_) return;
+    if (SDL_GetTicks() - typing_timestamp_ > BLINK_DURATION_MS) {
+        typing_state_ = false;
+    } else {
+        typing_state_ = true;
+        blink_start_ = SDL_GetTicks();
+        blink_state_ = true;
+    }
+    if (SDL_GetTicks() - blink_start_ > BLINK_DURATION_MS) {
+        blink_start_ = SDL_GetTicks();
+        blink_state_ = !blink_state_;
+    }
+    SDL_SetRenderDrawColor(renderer, background_color_.r, background_color_.g, background_color_.b,
+        background_color_.a);
+    SDL_RenderFillRect(renderer, &rect_);
+    if (texture_) {
+        SDL_FRect dst;
+        dst.w = text_w_;
+        dst.h = text_h_;
+        dst.x = rect_.x;
+        dst.y = rect_.y + (rect_.h - dst.h) / 2.0f;
+        SDL_RenderTexture(renderer, texture_, nullptr, &dst);
+        if (blink_state_ || typing_state_) {
+                SDL_FRect cursor_rect;
+                cursor_rect.x = dst.x + dst.w;
+                cursor_rect.y = dst.y - 1;
+                cursor_rect.h = dst.h + 2;
+                cursor_rect.w = 8;
+                SDL_SetRenderDrawColor(renderer, text_color_.r, text_color_.g, text_color_.b, text_color_.a);
+                SDL_RenderFillRect(renderer, &cursor_rect);
+        }
+    }
+}
+
 
 TerminalInputBuilder::TerminalInputBuilder() = default;
 

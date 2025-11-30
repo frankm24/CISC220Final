@@ -154,7 +154,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
         .position(.6, .1)
         .size(.35, .05)
         .backgroundColor({0, 0, 0, 255})
-        .text("Terminal:")
+        .text("* Terminal *")
         .textColor({255, 255, 255, 255})
         .build();
     newstate->sp_menu_els.push_back(terminal_label);
@@ -168,7 +168,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
         newstate->sp_menu_els.push_back(terminal->getLine(i));
     }
     terminal->addLine("Identified array");
-    TerminalInput *inputBox = TerminalInputBuilder()
+    TerminalInput *input_box = TerminalInputBuilder()
         .position(0.6, 0.6)
         .size(.35, .05)
         .backgroundColor({0, 0, 0, 255})
@@ -176,9 +176,9 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
         .textColor({255, 255, 255, 255})
         .terminal(terminal)
         .build();
-    inputBox->commandParser = parseCommand;
-    newstate->sp_menu_els.push_back(inputBox);
-    newstate->terminal_input = inputBox;
+    input_box->commandParser = parseCommand;
+    newstate->sp_menu_els.push_back(input_box);
+    newstate->terminal_input = input_box;
 
     TextBox *title = TextBoxBuilder()
         .position(0, 0.2)

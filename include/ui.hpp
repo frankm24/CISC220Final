@@ -159,13 +159,19 @@ protected:
    std::string input_text_;
    std::string static_text_;
    Terminal *terminal_;
+   Uint64 blink_start_ = 0;
+   Uint64 typing_timestamp_ = 0;
+   bool blink_state_ = false;
+   bool typing_state_ = false;
    TerminalInput(float x_scale, float y_scale, float w_scale, float h_scale, SDL_Color background_color,
     std::string text, SDL_Color text_color, int font_size, TextAlignment text_align_x, Terminal *terminal);
 public:
+   static constexpr Uint64 BLINK_DURATION_MS = 500;
    Callback commandParser; // Should return the command's "output" string to be saved to the commandHistory
    void addChars(const char *text);
    void handleBackspace();
    void parseCommand();
+   void draw(SDL_Renderer *renderer, TTF_Font *font) override;
 };
 
 class TerminalInputBuilder {
