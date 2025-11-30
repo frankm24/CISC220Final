@@ -5,242 +5,442 @@
 #include "ui.hpp"
 #include "murphy_util.hpp"
 
-UIElement::UIElement(float xScale, float yScale, float wScale, float hScale, SDL_Color backgroundColor) : xScale(xScale),
-    yScale(yScale), wScale(wScale), hScale(hScale), backgroundColor(backgroundColor) {}
+UIElement::UIElement(float x_scale, float y_scale, float w_scale, float h_scale, SDL_Color background_color) : x_scale_(x_scale),
+    y_scale_(y_scale), w_scale_(w_scale), h_scale_(h_scale), background_color_(background_color) {}
 
-void UIElement::computeBounds(int winW, int winH) {
-    this->rect = {xScale * static_cast<float>(winW), yScale * static_cast<float>(winH), wScale * static_cast<float>(winW),
-        hScale * static_cast<float>(winH)};
+void UIElement::computeBounds(int win_w, int win_h) {
+    rect_ = {x_scale_ * static_cast<float>(win_w), y_scale_ * static_cast<float>(win_h), w_scale_ * static_cast<float>(win_w),
+        h_scale_ * static_cast<float>(win_h)};
 }
 
 bool UIElement::containsPoint(int px, int py) const {
-    return px >= rect.x && py >= rect.y &&
-           px <  rect.x + rect.w &&
-           py <  rect.y + rect.h;
+    return px >= rect_.x && py >= rect_.y &&
+           px <  rect_.x + rect_.w &&
+           py <  rect_.y + rect_.h;
 }
 
-void UIElement::setVisible(bool isVisible) {
-    this->visible = isVisible;
+void UIElement::setVisible(bool is_visible) {
+    visible_ = is_visible;
 }
 
 bool UIElement::isVisible() const {
-    return this->visible;
+    return visible_;
 }
 
-TextBox::TextBox(std::string text, SDL_Color textColor, SDL_Color backgroundColor, float xScale, float yScale,
-    float wScale, float hScale, int fontSize) : UIElement(xScale, yScale, wScale, hScale, backgroundColor),
-    text(std::move(text)), textColor(textColor), fixedFontSize(fontSize) {
-}
+TextBox::TextBox(float x_scale, float y_scale, float w_scale, float h_scale, SDL_Color background_color,
+    std::string text, SDL_Color text_color, int font_size, TextAlignment text_align_x)
+    : UIElement(x_scale, y_scale, w_scale, h_scale, background_color), text_(std::move(text)),
+    text_color_(text_color), fixed_font_size_(font_size), text_align_x_(text_align_x) {}
 
 TextBox::~TextBox() {
-    if (this->texture) SDL_DestroyTexture(this->texture);
+    if (texture_) SDL_DestroyTexture(texture_);
 }
 
 void TextBox::draw(SDL_Renderer *renderer, TTF_Font *font) {
-    if (!this->visible) return;
-    SDL_SetRenderDrawColor(renderer, this->backgroundColor.r, this->backgroundColor.g, this->backgroundColor.b,
-        this->backgroundColor.a);
-    SDL_RenderFillRect(renderer, &this->rect);
-    if (this->texture) {
+    if (!visible_) return;
+    SDL_SetRenderDrawColor(renderer, background_color_.r, background_color_.g, background_color_.b,
+        background_color_.a);
+    SDL_RenderFillRect(renderer, &rect_);
+    if (texture_) {
         SDL_FRect dst;
-        dst.w = this->textW;
-        dst.h = this->textH;
-        dst.x = this->rect.x + (this->rect.w - dst.w) / 2.0f;
-        dst.y = this->rect.y + (this->rect.h - dst.h) / 2.0f;
-        SDL_RenderTexture(renderer, this->texture, nullptr, &dst);
+        dst.w = text_w_;
+        dst.h = text_h_;
+        switch (text_align_x_) {
+            case TextAlignment::Left:
+                dst.x = rect_.x;
+                break;
+            default:
+                dst.x = rect_.x + (rect_.w - dst.w) / 2.0f;
+                break;
+        }
+        dst.y = rect_.y + (rect_.h - dst.h) / 2.0f;
+        SDL_RenderTexture(renderer, texture_, nullptr, &dst);
     }
-}
-// ignore for now
-float computeLargestFontSize(float rectW, float rectH, unsigned long textLength, float baseSize, int advance0, int lineHeight0) {
-    float S0 = std::min(
-    rectW * baseSize / static_cast<float>(textLength * advance0),
-    rectH * baseSize / static_cast<float>(lineHeight0)
-    );
-    float adv = advance0 * (S0 / baseSize);
-    int charsPerLine = std::max(1, static_cast<int>(rectW / adv));
-    int lines = std::ceil(static_cast<float>(textLength) / static_cast<float>(charsPerLine));
-
-    float Sfit = rectH * baseSize / static_cast<float>(lines * lineHeight0);
-    return Sfit;
 }
 
 void TextBox::updateCache(SDL_Renderer *renderer, TTF_Font *font) {
-    if (this->texture) SDL_DestroyTexture(this->texture);
-    if (fixedFontSize != 0) TTF_SetFontSize(font, fixedFontSize);
-    else TTF_SetFontSize(font, 0.75f*this->rect.h);
-    // New maybe used FONT Sizing Method
-    // float baseSize = TTF_GetFontSize(font);
-    // int lineHeight0 = TTF_GetFontHeight(font);
-    // int advance0 = 0;
-    // if (!TTF_GetGlyphMetrics(font, 'M', nullptr, nullptr, nullptr, nullptr, &advance0) != 0) {
-    //     SDL_Log("TTF_GlyphMetrics error: %s", SDL_GetError());
-    // }
-    // float maxSize = computeLargestFontSize(this->rect.w, this->rect.h, this->text.length(), baseSize, advance0, lineHeight0);
-    // TTF_SetFontSize(font, maxSize);
-
-    if (!this->text.empty()) {
-        SDL_Surface *surface = TTF_RenderText_Blended(font, this->text.c_str(), this->text.size(), this->textColor);
-        this->texture = SDL_CreateTextureFromSurface(renderer, surface);
-        this->textW = static_cast<float>(surface->w);
-        this->textH = static_cast<float>(surface->h);
+    if (texture_) SDL_DestroyTexture(texture_);
+    if (fixed_font_size_ != 0) TTF_SetFontSize(font, fixed_font_size_);
+    else TTF_SetFontSize(font, 0.75f*rect_.h);
+    
+    if (!text_.empty()) {
+        SDL_Surface *surface = TTF_RenderText_Blended(font, text_.c_str(), text_.size(), text_color_);
+        texture_ = SDL_CreateTextureFromSurface(renderer, surface);
+        SDL_SetTextureScaleMode(texture_, SDL_SCALEMODE_NEAREST);
+        text_w_ = static_cast<float>(surface->w);
+        text_h_ = static_cast<float>(surface->h);
         SDL_DestroySurface(surface);
     }
-    SDL_SetTextureScaleMode(this->texture, SDL_SCALEMODE_NEAREST);
 }
 
 std::string TextBox::getText() const {
-    return this->text;
+    return text_;
 }
 
 void TextBox::setText(std::string text) {
-    this->text = std::move(text);
+    text_ = std::move(text);
 }
 
-Terminal::Terminal(SDL_Color textColor, SDL_Color backgroundColor, float xScale, float yScale, float wScale,
-    float hScale, int numItems) : textColor(textColor), commandHistory(numItems),
-        numItems(numItems) {
-    this->textBoxes = new TextBox*[numItems];
-    for (int i = 0; i < numItems; i++) {
-        this->textBoxes[i] = new TextBox("", textColor, backgroundColor, xScale,
-            yScale + hScale - (float)i * (hScale/(float)numItems), wScale, hScale/(float)numItems);
+TextBoxBuilder::TextBoxBuilder() = default;
+
+TextBoxBuilder& TextBoxBuilder::text(std::string t) {
+    text_ = std::move(t);
+    return *this;
+}
+
+TextBoxBuilder& TextBoxBuilder::textColor(SDL_Color c) {
+    text_color_ = c;
+    return *this;
+}
+
+TextBoxBuilder& TextBoxBuilder::backgroundColor(SDL_Color c) {
+    background_color_ = c;
+    return *this;
+}
+
+TextBoxBuilder& TextBoxBuilder::position(float x, float y) {
+    x_scale_ = x;
+    y_scale_ = y;
+    return *this;
+}
+
+TextBoxBuilder& TextBoxBuilder::size(float w, float h) {
+    w_scale_ = w;
+    h_scale_ = h;
+    return *this;
+}
+
+TextBoxBuilder& TextBoxBuilder::fontSize(int px) {
+    font_size_ = px;
+    return *this;
+}
+
+TextBoxBuilder& TextBoxBuilder::alignX(TextAlignment align_x) {
+    text_align_x_ = align_x;
+    return *this;
+}
+
+TextBox* TextBoxBuilder::build() {
+    return new TextBox(
+        x_scale_,
+        y_scale_,
+        w_scale_,
+        h_scale_,
+        background_color_,
+        text_,
+        text_color_,
+        font_size_,
+        text_align_x_
+    );
+}
+
+Terminal::Terminal(SDL_Color text_color, SDL_Color background_color, float x_scale, float y_scale, float w_scale,
+    float h_scale, int num_items) : text_color_(text_color), command_history_(num_items),
+        num_items_(num_items) {
+    text_boxes_ = new TextBox*[num_items_];
+    const float line_h = h_scale / static_cast<float>(num_items_);
+    for (int i = 0; i < num_items_; ++i) {
+        float line_y = y_scale + h_scale - static_cast<float>(i) * line_h;
+        text_boxes_[i] = TextBoxBuilder{}
+            .position(x_scale, line_y)
+            .size(w_scale, line_h)
+            .backgroundColor(background_color)
+            .text("")
+            .textColor(text_color)
+            .build();
     }
 }
 
+// Terminal::~Terminal() {
+//     for (int i = 0; i < num_items_; ++i) {
+//         if (text_boxes_[i]) delete text_boxes_[i];
+//     }
+//     delete[] text_boxes_;
+// }
+
 void Terminal::addLine(std::string text) {
-    this->commandHistory.push_front(text);
-    for (int i = 0; i < this->commandHistory.size(); i++) {
-        this->getLine(i)->setText(this->commandHistory.at(i));
+    command_history_.push_front(text);
+    for (int i = 0; i < command_history_.size(); i++) {
+        getLine(i)->setText(command_history_.at(i));
     }
 }
 
 TextBox *Terminal::getLine(int index) {
-    return textBoxes[index];
+    return text_boxes_[index];
 }
 
 void Terminal::updateCache(SDL_Renderer *renderer, TTF_Font *font) {
-    for (int i = 0; i < this->numItems; i++) {
-        this->getLine(i)->updateCache(renderer, font);
+    for (int i = 0; i < num_items_; i++) {
+        getLine(i)->updateCache(renderer, font);
     }
 }
 
-Button::Button(std::string text, SDL_Color textColor, SDL_Color backgroundColor, SDL_Color hoverColor, float xScale,
-    float yScale, float wScale, float hScale, Callback onClick, Callback onPressImmediate) : TextBox(text, textColor, backgroundColor, xScale, yScale, wScale,
-        hScale) {
-    this->fnOnClick = std::move(onClick);
-    this->fnOnPressImmediate = std::move(onPressImmediate);
-    this->hoverColor = hoverColor;
-    float hoverL = luminance(hoverColor);
-    if (hoverL > 128.0f) {
-        this->pressedColor = adjustBrightness(hoverColor, 0.85f);
-    } else {
-        this->pressedColor = adjustBrightness(hoverColor, 1.15f);
-    }
-    this->state = ButtonState::Idle;
+Button::Button(float x_scale, float y_scale, float w_scale, float h_scale, SDL_Color background_color, std::string text,
+    SDL_Color text_color, int font_size, TextAlignment text_align_x, SDL_Color hover_color, Callback onClick,
+    Callback onPressImmediate) : TextBox(x_scale, y_scale, w_scale, h_scale, background_color, std::move(text),
+    text_color, font_size, text_align_x), state_(ButtonState::Idle), hover_color_(hover_color) {
+        fnOnClick = std::move(onClick);
+        fnOnPressImmediate = std::move(onPressImmediate);
+        float hoverL = luminance(hover_color);
+        if (hoverL > 128.0f) {
+            pressed_color_ = adjustBrightness(hover_color, 0.85f);
+        } else {
+            pressed_color_ = adjustBrightness(hover_color, 1.15f);
+        }
+        state_ = ButtonState::Idle;
 }
 
-Button::ButtonState Button::getState() {
-    return this->state;
+ButtonState Button::getState() {
+    return state_;
 }
 
 void Button::draw(SDL_Renderer *renderer, TTF_Font *font) {
-    if (!this->visible) return;
+    if (!visible_) return;
     SDL_Color color;
-    switch (this->state) {
+    switch (state_) {
         case ButtonState::Idle:
-            color = this->backgroundColor;
+            color = background_color_;
             break;
         case ButtonState::Hovered:
-            color = this->hoverColor;
+            color = hover_color_;
             break;
         case ButtonState::Down:
         case ButtonState::Clicked:
-            color = this->pressedColor;
+        default:
+            color = pressed_color_;
             break;
     }
     SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
-    SDL_RenderFillRect(renderer, &this->rect);
-    if (this->texture) {
+    SDL_RenderFillRect(renderer, &rect_);
+    if (texture_) {
         SDL_FRect dst;
-        dst.w = this->textW;
-        dst.h = this->textH;
-        dst.x = this->rect.x + (this->rect.w - dst.w) / 2.0f;
-        dst.y = this->rect.y + (this->rect.h - dst.h) / 2.0f;
-        SDL_RenderTexture(renderer, this->texture, nullptr, &dst);
+        dst.w = text_w_;
+        dst.h = text_h_;
+        dst.x = rect_.x + (rect_.w - dst.w) / 2.0f;
+        dst.y = rect_.y + (rect_.h - dst.h) / 2.0f;
+        SDL_RenderTexture(renderer, texture_, nullptr, &dst);
     }
 }
 
 void Button::onMouseMotion(int x, int y) {
-    bool mouseInside = this->containsPoint(x, y);
-    if (mouseInside && this->state == ButtonState::Idle)
-        this->state = ButtonState::Hovered;
-    else if (!mouseInside && this->state != ButtonState::Idle && this->state != ButtonState::Clicked)
-        this->state = ButtonState::Idle;
+    bool mouseInside = containsPoint(x, y);
+    if (mouseInside && state_ == ButtonState::Idle)
+        state_ = ButtonState::Hovered;
+    else if (!mouseInside && state_ != ButtonState::Idle && state_ != ButtonState::Clicked)
+        state_ = ButtonState::Idle;
 }
 
-void Button::onPress(AppState *appstate) {
-    if (fnOnClick) fnOnClick(appstate);
+void Button::onPress(AppState *state) {
+    if (fnOnClick) fnOnClick(state);
     SDL_Log("full press");
 }
 
-void Button::onPressImmediate(AppState *appstate) {
-    if (fnOnPressImmediate) fnOnPressImmediate(appstate);
+void Button::onPressImmediate(AppState *state) {
+    if (fnOnPressImmediate) fnOnPressImmediate(state);
     SDL_Log("press immediate");
 }
 
-void Button::onMouseDown(int x, int y, AppState *appstate) {
-    if (this->containsPoint(x, y)) {
-        this->state = ButtonState::Down;
-        this->onPressImmediate(appstate);
+void Button::onMouseDown(int x, int y, AppState *state) {
+    if (containsPoint(x, y)) {
+        state_ = ButtonState::Down;
+        onPressImmediate(state);
         // Allows instant feedback before the actual click,
         // combines Carmack strategy with traditional UI
     }
 }
 
-void Button::onMouseUp(int x, int y, AppState *appstate) {
-    if (this->state == ButtonState::Down && this->containsPoint(x, y)) {
-        this->state = ButtonState::Clicked;
-        this->clickEffectStart = SDL_GetTicks();
-        this->onPress(appstate);
+void Button::onMouseUp(int x, int y, AppState *state) {
+    if (state_ == ButtonState::Down && containsPoint(x, y)) {
+        state_ = ButtonState::Clicked;
+        click_effect_start_ = SDL_GetTicks();
+        onPress(state);
     }
 }
 
 void Button::updateEffect(int x, int y) {
     // If click effect active, return to hover after brief flash
 
-    if (this->state == ButtonState::Clicked &&
-        SDL_GetTicks() - this->clickEffectStart > CLICK_EFFECT_DURATION_MS) {
+    if (state_ == ButtonState::Clicked &&
+        SDL_GetTicks() - click_effect_start_ > CLICK_EFFECT_DURATION_MS) {
         float mx, my;
         SDL_GetMouseState(&mx, &my);
 
-        if (this->containsPoint(x, y)) {
-            this->state = ButtonState::Hovered;
-        } else this->state = ButtonState::Idle;
+        if (containsPoint(x, y)) {
+            state_ = ButtonState::Hovered;
+        } else state_ = ButtonState::Idle;
     }
 }
 
-TerminalInput::TerminalInput(std::string text, SDL_Color textColor, SDL_Color backgroundColor, float xScale,
-    float yScale, float wScale, float hScale, Terminal *terminal) : TextBox(text, textColor, backgroundColor, xScale, yScale, wScale,
-    hScale), staticText(text), terminal(terminal) {
+ButtonBuilder::ButtonBuilder() = default;
+
+ButtonBuilder& ButtonBuilder::position(float x, float y) {
+    x_scale_ = x;
+    y_scale_ = y;
+    return *this;
 }
 
+ButtonBuilder& ButtonBuilder::size(float w, float h) {
+    w_scale_ = w;
+    h_scale_ = h;
+    return *this;
+}
+
+ButtonBuilder& ButtonBuilder::backgroundColor(SDL_Color c) {
+    background_color_ = c;
+    return *this;
+}
+
+ButtonBuilder& ButtonBuilder::text(std::string t) {
+    text_ = std::move(t);
+    return *this;
+}
+
+ButtonBuilder& ButtonBuilder::textColor(SDL_Color c) {
+    text_color_ = c;
+    return *this;
+}
+
+ButtonBuilder& ButtonBuilder::fontSize(int px) {
+    font_size_ = px;
+    return *this;
+}
+
+ButtonBuilder& ButtonBuilder::alignX(TextAlignment align_x) {
+    text_align_x_ = align_x;
+    return *this;
+}
+
+ButtonBuilder& ButtonBuilder::hoverColor(SDL_Color c) {
+    hover_color_ = c;
+    return *this;
+}
+
+ButtonBuilder& ButtonBuilder::onClick(Button::Callback cb) {
+    on_click_ = std::move(cb);
+    return *this;
+}
+
+ButtonBuilder& ButtonBuilder::onPressImmediate(Button::Callback cb) {
+    on_press_immediate_ = std::move(cb);
+    return *this;
+}
+
+Button* ButtonBuilder::build() {
+    if (w_scale_ <= 0.0f || h_scale_ <= 0.0f) {
+       SDL_Log("ButtonBuilder: invalid size");
+       return nullptr;
+    }
+    return new Button(
+       x_scale_,
+       y_scale_,
+       w_scale_,
+       h_scale_,
+       background_color_,
+       text_,
+       text_color_,
+       font_size_,
+       text_align_x_,
+       hover_color_,
+       on_click_,
+       on_press_immediate_
+    );
+}
+
+TerminalInput::TerminalInput(float x_scale, float y_scale, float w_scale, float h_scale, SDL_Color background_color,
+    std::string text, SDL_Color text_color, int font_size, TextAlignment text_align_x, Terminal *terminal) :
+    TextBox(x_scale, y_scale, w_scale, h_scale, background_color, text, text_color, font_size, text_align_x),
+    static_text_(text), terminal_(terminal) {}
+
 void TerminalInput::addChars(const char *text) {
-    this->inputText += std::string(text);
-    this->text = this->staticText + this->inputText;
+    input_text_ += std::string(text);
+    text_ = static_text_ + input_text_;
 }
 
 void TerminalInput::handleBackspace() {
-    if (!this->inputText.empty()) this->inputText.pop_back();
-    this->text = this->staticText + this->inputText;
+    if (!input_text_.empty()) input_text_.pop_back();
+    text_ = static_text_ + input_text_;
 }
 
 void TerminalInput::parseCommand() {
-    if (this->inputText.empty()) return;
-    std::string output = this->commandParser(this->inputText);
+    if (input_text_.empty()) return;
+    std::string output = commandParser(input_text_);
     if (!output.empty()) {
-        this->inputText = std::string();
-        this->text = this->staticText + this->inputText;
-        terminal->addLine(output);
+        input_text_ = std::string();
+        text_ = static_text_ + input_text_;
+        terminal_->addLine(output);
     }
+}
+
+TerminalInputBuilder::TerminalInputBuilder() = default;
+
+TerminalInputBuilder& TerminalInputBuilder::position(float x, float y) {
+    x_scale_ = x;
+    y_scale_ = y;
+    return *this;
+}
+
+TerminalInputBuilder& TerminalInputBuilder::size(float w, float h) {
+    w_scale_ = w;
+    h_scale_ = h;
+    return *this;
+}
+
+TerminalInputBuilder& TerminalInputBuilder::backgroundColor(SDL_Color c) {
+    background_color_ = c;
+    return *this;
+}
+
+TerminalInputBuilder& TerminalInputBuilder::staticText(std::string t) {
+    text_ = std::move(t);
+    return *this;
+}
+
+TerminalInputBuilder& TerminalInputBuilder::textColor(SDL_Color c) {
+    text_color_ = c;
+    return *this;
+}
+
+TerminalInputBuilder& TerminalInputBuilder::fontSize(int px) {
+    font_size_ = px;
+    return *this;
+}
+
+TerminalInputBuilder& TerminalInputBuilder::terminal(Terminal *t) {
+    terminal_ = t;
+    return *this;
+}
+
+TerminalInputBuilder& TerminalInputBuilder::commandParser(TerminalInput::Callback cb) {
+    command_parser_ = std::move(cb);
+    return *this;
+}
+
+TerminalInput* TerminalInputBuilder::build() {
+    if (!terminal_) {
+        SDL_Log("TerminalInputBuilder: terminal is null");
+        return nullptr;
+    }
+    if (w_scale_ <= 0.0f || h_scale_ <= 0.0f) {
+        SDL_Log("TerminalInputBuilder: invalid size");
+        return nullptr;
+    }
+
+    // Adjust the constructor call if your TerminalInput signature is different.
+    TerminalInput *input = new TerminalInput(
+        x_scale_,
+        y_scale_,
+        w_scale_,
+        h_scale_,
+        background_color_,
+        text_,
+        text_color_,
+        font_size_,
+        TextAlignment::Left,
+        terminal_
+    );
+
+    input->commandParser = command_parser_;
+    return input;
 }
 
 

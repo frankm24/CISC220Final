@@ -27,13 +27,13 @@ struct AppState {
     std::vector<UIElement*> main_menu_els;
     std::vector<UIElement*> sp_menu_els;
     std::vector<UIElement*> *active_els = &main_menu_els;
-    TerminalInput *terminalInput;
+    TerminalInput *terminal_input;
     Terminal *terminal;
     TTF_Font *ui_font = nullptr;
-    float dpiScaleX = 1.0f;
-    float dpiScaleY = 1.0f;
-    int mouseX = 0;
-    int mouseY = 0;
+    float dpi_scale_x = 1.0f;
+    float dpi_scale_y = 1.0f;
+    int mouse_x = 0;
+    int mouse_y = 0;
     UIState ui_state = UIState::MainMenu;
 };
 
@@ -79,58 +79,85 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
     // the game only loops as fast as it needs to do display the UI at your monitor's refresh rate
     // normally this is a different setting from the game's tick rate but it's not too important right now
     *appstate = newstate;
-    int winW, winH;
-    SDL_GetWindowSize(newstate->window, &winW, &winH);
+    int win_w, win_h;
+    SDL_GetWindowSize(newstate->window, &win_w, &win_h);
 
-    int drawableW, drawableH;
-    SDL_GetRenderOutputSize(newstate->renderer, &drawableW, &drawableH);
+    int drawable_w, drawable_h;
+    SDL_GetRenderOutputSize(newstate->renderer, &drawable_w, &drawable_h);
 
-    newstate->dpiScaleX = static_cast<float>(drawableW) / winW;
-    newstate->dpiScaleY = static_cast<float>(drawableH) / winH;
+    newstate->dpi_scale_x = static_cast<float>(drawable_w) / win_w;
+    newstate->dpi_scale_y = static_cast<float>(drawable_h) / win_h;
 
     SDL_Log("Logical window %dx%d, Drawable %dx%d, scale=(%f,%f)",
-            winW, winH, drawableW, drawableH,
-            newstate->dpiScaleX, newstate->dpiScaleY);
+            win_w, win_h, drawable_w, drawable_h,
+            newstate->dpi_scale_x, newstate->dpi_scale_y);
 
     if (!TTF_Init()) {
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", SDL_GetError(), nullptr);
         delete newstate;
         return SDL_APP_FAILURE;
     }
-    std::string fontPath = getAssetPath("fonts/ibm.ttf");
-    newstate->ui_font = TTF_OpenFont(fontPath.c_str(), 8);
+    std::string font_path = getAssetPath("fonts/ibm.ttf");
+    newstate->ui_font = TTF_OpenFont(font_path.c_str(), 8);
     if (!newstate->ui_font) {
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Font Error", SDL_GetError(), nullptr);
         delete newstate;
         return SDL_APP_FAILURE;
     }
-    // TTF_SetFontHinting(newstate->ui_font,TTF_HINTING_LIGHT_SUBPIXEL);
-    TextBox *squares = new TextBox("b",{255, 255, 255, 255},{255, 255, 255, 255},
-        .06, .1, .48, .8);
+
+    TextBox *squares = TextBoxBuilder()
+        .position(.06, .1)
+        .size(.48, .8)
+        .backgroundColor({255, 255, 255, 255})
+        .textColor({255, 255, 255, 255})
+        .text("b")
+        .build();
     //Adds squares, a white box that is behind the actual squares.
     newstate->sp_menu_els.push_back(squares);
     for (int i = 0; i < 16; i++) {
         for (int j = 0; j < 16; j++) {
-            TextBox *square = new TextBox("u",{0, 0, 0, 0},{0, 0, 255, 0},
-                (0.06 + (0.03*j)), (0.1 + (0.05 * i)), .03, .05);
+            TextBox *square = TextBoxBuilder()
+                .position(0.06 + 0.03*j, 0.1 + 0.05 * i)
+                .size(0.03, 0.05)
+                .backgroundColor({0, 0, 255, 255})
+                .text("u")
+                .textColor({0, 0, 0, 255})
+                .build();
             //Adds a 16x16 grid of squares
             newstate->sp_menu_els.push_back(square);
         }
     }
     // Labels
     for (int i = 0; i < 16; i++) {
-        TextBox *square = new TextBox(std::string() + toHexDigit(i),{255, 255, 255, 0},{0, 0, 0, 0},
-            (0.01), (0.85 - (0.05 * i)), .05, .05);
+        TextBox *square = TextBoxBuilder()
+            .position(0.01, 0.85 - 0.05*i)
+            .size(.03, .05)
+            .backgroundColor({0, 0, 0, 255})
+            .text(std::string(" ") + toHexDigit(i))
+            .textColor({255, 255, 255, 255})
+            .fontSize(40)
+            .build();
         newstate->sp_menu_els.push_back(square);
     }
     for (int i = 0; i < 16; i++) {
-        TextBox *square = new TextBox(std::string() + toHexDigit(i),{255, 255, 255, 0},{0, 0, 0, 0},
-            (0.06 + (0.03*i)), 0.9, .03, .05);
+        TextBox *square = TextBoxBuilder()
+            .position(0.06 + 0.03*i, 0.9)
+            .size(.03, .05)
+            .backgroundColor({0, 0, 0, 255})
+            .text(std::string(" ") + toHexDigit(i))
+            .textColor({255, 255, 255, 255})
+            .fontSize(40)
+            .build();
         newstate->sp_menu_els.push_back(square);
     }
-    TextBox *terminalLabel = new TextBox("Terminal:", {255, 255, 255, 0}, {0, 0, 0, 0},
-        .6, .1, .35, .05);
-    newstate->sp_menu_els.push_back(terminalLabel);
+    TextBox *terminal_label = TextBoxBuilder()
+        .position(.6, .1)
+        .size(.35, .05)
+        .backgroundColor({0, 0, 0, 255})
+        .text("Terminal:")
+        .textColor({255, 255, 255, 255})
+        .build();
+    newstate->sp_menu_els.push_back(terminal_label);
 
     int numItems = 12;
     Terminal *terminal = new Terminal({255, 255, 255, 0}, {0, 0, 0, 0},
@@ -141,24 +168,43 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
         newstate->sp_menu_els.push_back(terminal->getLine(i));
     }
     terminal->addLine("Identified array");
-    TerminalInput *inputBox = new TerminalInput("player$ ", {255, 255, 255, 0},
-        {0, 0, 0, 0}, .6, .6, .35, .05, terminal);
+    TerminalInput *inputBox = TerminalInputBuilder()
+        .position(0.6, 0.6)
+        .size(.35, .05)
+        .backgroundColor({0, 0, 0, 255})
+        .staticText("player$ ")
+        .textColor({255, 255, 255, 255})
+        .terminal(terminal)
+        .build();
     inputBox->commandParser = parseCommand;
     newstate->sp_menu_els.push_back(inputBox);
-    newstate->terminalInput = inputBox;
+    newstate->terminal_input = inputBox;
 
-    TextBox *title = new TextBox("Memsweeper", {255, 255, 255, 255},
-        {0, 0, 0, 0}, 0, 0.2, 1, 0.2);
+    TextBox *title = TextBoxBuilder()
+        .position(0, 0.2)
+        .size(1, 0.2)
+        .backgroundColor({0, 0, 0, 255})
+        .text("Memsweeper")
+        .textColor({255, 255, 255, 255})
+        .build();
     newstate->main_menu_els.push_back(title);
 
-    Button *spButton = new Button("Singleplayer", {255, 255, 255, 255}, {100, 0, 0, 255}, {200, 200, 100, 255}, 0, 0.5, 1, 0.1, spOnClick);
-    newstate->main_menu_els.push_back(spButton);
+    Button *sp_button = ButtonBuilder()
+        .position(0, 0.5)
+        .size(1, 0.1)
+        .backgroundColor({100, 0, 0, 255})
+        .text("Singleplayer")
+        .textColor({255, 255, 255, 255})
+        .hoverColor({200, 200, 100, 255})
+        .onClick(spOnClick)
+        .build();
+    newstate->main_menu_els.push_back(sp_button);
     for (UIElement *el : newstate->main_menu_els) {
-        el->computeBounds(drawableW, drawableH);
+        el->computeBounds(drawable_w, drawable_h);
         el->updateCache(newstate->renderer, newstate->ui_font);
     }
     for (UIElement *el : newstate->sp_menu_els) {
-        el->computeBounds(drawableW, drawableH);
+        el->computeBounds(drawable_w, drawable_h);
         el->updateCache(newstate->renderer, newstate->ui_font);
     }
 
@@ -169,20 +215,20 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) { // General event 
     AppState *state = static_cast<AppState*>(appstate);
     const float x_win = event->motion.x;
     const float y_win = event->motion.y;
-    const int x = static_cast<int>(x_win * state->dpiScaleX);
-    const int y = static_cast<int>(y_win * state->dpiScaleY);
-    state->mouseX = x;
-    state->mouseY = y;
+    const int x = static_cast<int>(x_win * state->dpi_scale_x);
+    const int y = static_cast<int>(y_win * state->dpi_scale_y);
+    state->mouse_x = x;
+    state->mouse_y = y;
     switch (event->type) {
         case SDL_EVENT_QUIT:
             return SDL_APP_SUCCESS;
         case SDL_EVENT_WINDOW_RESIZED:
         case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED: {
-            int drawableW, drawableH;
-            SDL_GetRenderOutputSize(state->renderer, &drawableW, &drawableH);
+            int drawable_w, drawable_h;
+            SDL_GetRenderOutputSize(state->renderer, &drawable_w, &drawable_h);
 
             for (UIElement *el : *state->active_els) {
-                el->computeBounds(drawableW, drawableH);
+                el->computeBounds(drawable_w, drawable_h);
                 el->updateCache(state->renderer, state->ui_font);
             }
             break;
@@ -209,20 +255,20 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) { // General event 
             break;
         }
         case SDL_EVENT_TEXT_INPUT: {
-            state->terminalInput->addChars(event->text.text);
-            state->terminalInput->updateCache(state->renderer, state->ui_font);
+            state->terminal_input->addChars(event->text.text);
+            state->terminal_input->updateCache(state->renderer, state->ui_font);
             break;
         }
         case SDL_EVENT_KEY_DOWN:
             if (state->active_els == &state->sp_menu_els) {
                 if (event->key.key == SDLK_BACKSPACE) {
-                    state->terminalInput->handleBackspace();
+                    state->terminal_input->handleBackspace();
                 }
                 else if (event->key.key == SDLK_RETURN) {
-                    state->terminalInput->parseCommand();
+                    state->terminal_input->parseCommand();
                     state->terminal->updateCache(state->renderer, state->ui_font);
                 }
-                state->terminalInput->updateCache(state->renderer, state->ui_font);
+                state->terminal_input->updateCache(state->renderer, state->ui_font);
             }
             break;
         default:
@@ -240,7 +286,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) { // Runs once every main loop
         el->draw(state->renderer, state->ui_font);
         if (Button* btn = dynamic_cast<Button*>(el)) {
             // el is actually a Button, so we can do its animation effect
-            btn->updateEffect(state->mouseX, state->mouseY);
+            btn->updateEffect(state->mouse_x, state->mouse_y);
         }
     }
 
@@ -251,7 +297,11 @@ SDL_AppResult SDL_AppIterate(void *appstate) { // Runs once every main loop
 void SDL_AppQuit(void *appstate, SDL_AppResult result) {
     AppState *state = static_cast<AppState*>(appstate);
     if (state) {
-        for (UIElement* elem : *state->active_els) {
+        delete state->terminal;
+        for (UIElement* elem : state->sp_menu_els) {
+            delete elem;
+        }
+        for (UIElement* elem : state->main_menu_els) {
             delete elem;
         }
         if (state->ui_font) TTF_CloseFont(state->ui_font);
