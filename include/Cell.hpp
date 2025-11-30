@@ -19,6 +19,7 @@ public:
     Cell(string data, Structure *s, bool revealed );
     ~Cell();
     void reveal(); // show pointer in terminal and update reveal
+    string getData();
 };
 
 #endif //CISC220FINAL_UNIT_H

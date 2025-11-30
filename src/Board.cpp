@@ -174,7 +174,15 @@ int Board::unlockUnit(int loc){
     return count;
 }
 
+Cell *Board::getGrid() {
+    return grid;
+}
+
+int Board::getNumRevealed() {
+    return num_revealed;
+}
+
 
 //testing below:
-Board testDefault = Board();
+//Board testDefault = Board();
 //not deleting

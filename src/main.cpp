@@ -3,6 +3,7 @@
 #define SDL_MAIN_USE_CALLBACKS
 #include <vector>
 
+#include "Board.hpp"
 #include "murphy_util.hpp"
 #include "ui.hpp"
 #include "SDL3/SDL_main.h"
@@ -105,6 +106,8 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
         return SDL_APP_FAILURE;
     }
 
+    Board testDefault = Board();
+
     TextBox *squares = TextBoxBuilder()
         .position(.06, .1)
         .size(.48, .8)
@@ -120,7 +123,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
                 .position(0.06 + 0.03*j, 0.1 + 0.05 * i)
                 .size(0.03, 0.05)
                 .backgroundColor({0, 0, 255, 255})
-                .text("u")
+                .text("?")
                 .textColor({0, 0, 0, 255})
                 .build();
             //Adds a 16x16 grid of squares
@@ -179,6 +182,16 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
     input_box->commandParser = parseCommand;
     newstate->sp_menu_els.push_back(input_box);
     newstate->terminal_input = input_box;
+
+    TextBox *score = TextBoxBuilder()
+            .position(0.15, 0.02)
+            .size(0.03, 0.05)
+            .backgroundColor({0, 0, 0, 255})
+            .text("squares explored: " + std::to_string(testDefault.getNumRevealed()))
+            .textColor({255, 255, 255, 255})
+            .fontSize(20)
+            .build();
+    newstate->sp_menu_els.push_back(score);
 
     TextBox *title = TextBoxBuilder()
         .position(0, 0.2)

@@ -22,3 +22,7 @@ void Cell::reveal() {
 
 }
 
+string Cell::getData() {
+    return data;
+}
+

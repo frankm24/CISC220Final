@@ -23,6 +23,8 @@ public:
     void printBoard();
     int unlockObject(int loc);
     int unlockUnit(int loc);
+    Cell *getGrid();
+    int getNumRevealed();
 };
 
 #endif //CISC220FINAL_BOARD_H
