@@ -130,10 +130,10 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
     // Labels
     for (int i = 0; i < 16; i++) {
         TextBox *square = TextBoxBuilder()
-            .position(0.01, 0.85 - 0.05*i)
-            .size(.03, .05)
+            .position(0.03, 0.85 - 0.05*i)
+            .size(0.03, 0.05)
             .backgroundColor({0, 0, 0, 255})
-            .text(std::string(" ") + toHexDigit(i))
+            .text(std::string() + toHexDigit(i))
             .textColor({255, 255, 255, 255})
             .fontSize(40)
             .build();
@@ -142,9 +142,9 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
     for (int i = 0; i < 16; i++) {
         TextBox *square = TextBoxBuilder()
             .position(0.06 + 0.03*i, 0.9)
-            .size(.03, .05)
+            .size(0.03, 0.05)
             .backgroundColor({0, 0, 0, 255})
-            .text(std::string(" ") + toHexDigit(i))
+            .text(std::string() + toHexDigit(i))
             .textColor({255, 255, 255, 255})
             .fontSize(40)
             .build();
