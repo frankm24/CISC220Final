@@ -53,6 +53,24 @@ void spOnClick(AppState *state) {
 }
 
 std::string parseCommand(std::string command) {
+    std::cout<< command << std::endl;
+    if (command.length() < 3) {
+        return "provide valid input";
+    } else {
+        if (command.substr(0,3) == "loc") {
+            if (command.length() < 5) return "provide valid loc command";
+            if (command.substr(3,5) == "++") {
+            //move right
+            }
+            else if (command.substr(3,5) == "--") {
+                //move left
+            }else if (command.length() !=8) {
+                return "provide valid loc command";
+            } else {
+                //to implement specific location move
+            }
+        }
+    }
     return "Successfully did thing";
 }
 
