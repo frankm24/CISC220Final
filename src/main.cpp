@@ -77,23 +77,19 @@ int movePlayer(AppState *state, int index) {
     }
     if (TextBox* element = dynamic_cast<TextBox*>(state->sp_menu_els[304])) {
         element->setText("moves left: " + std::to_string(state->board->getPlayer().getMoves()));
-        element->updateCache(state->renderer,state->ui_font);
     }
     revealCell(state, index);
     if (TextBox* element = dynamic_cast<TextBox*>(state->sp_menu_els[303])) {
         element->setText("squares explored: " + std::to_string(state->board->getNumRevealed()) + "/256");
-        element->updateCache(state->renderer,state->ui_font);
     }
     UIElement *cell = state->sp_menu_els[(std::ceil((256.0-old)/16)*16-(15-old%16))];
     if (TextBox* element = dynamic_cast<TextBox*>(cell)) {
         element->setText("A");
         // Ideally we would set this to a char representing the cell's data type, but I didn't find an easy way to do it
-        element->updateCache(state->renderer,state->ui_font);
     }
     cell = state->sp_menu_els[(std::ceil((256.0-index)/16)*16-(15-index%16))];
     if (TextBox* element = dynamic_cast<TextBox*>(cell)) {
         element->setText(":)");
-        element->updateCache(state->renderer,state->ui_font);
     }
     return 1;
 }
@@ -330,7 +326,6 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) { // General event 
         }
         case SDL_EVENT_TEXT_INPUT: {
             state->terminal_input->addChars(event->text.text);
-            state->terminal_input->updateCache(state->renderer, state->ui_font);
             break;
         }
         case SDL_EVENT_KEY_DOWN:
@@ -340,9 +335,7 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) { // General event 
                 }
                 else if (event->key.key == SDLK_RETURN) {
                     state->terminal_input->parseCommand();
-                    state->terminal->updateCache(state->renderer, state->ui_font);
                 }
-                state->terminal_input->updateCache(state->renderer, state->ui_font);
             }
             break;
         default:

@@ -34,7 +34,8 @@ void UIElement::setColor(SDL_Color color) {
 TextBox::TextBox(float x_scale, float y_scale, float w_scale, float h_scale, SDL_Color background_color,
     std::string text, SDL_Color text_color, int font_size, TextAlignment text_align_x)
     : UIElement(x_scale, y_scale, w_scale, h_scale, background_color), text_(std::move(text)),
-    text_color_(text_color), fixed_font_size_(font_size), text_align_x_(text_align_x) {}
+    text_color_(text_color), fixed_font_size_(font_size), text_align_x_(text_align_x),
+    prev_text_(std::move(text)) {}
 
 TextBox::~TextBox() {
     if (texture_) SDL_DestroyTexture(texture_);
@@ -42,6 +43,7 @@ TextBox::~TextBox() {
 
 void TextBox::draw(SDL_Renderer *renderer, TTF_Font *font) {
     if (!visible_) return;
+    if (text_ != prev_text_) updateCache(renderer, font);
     SDL_SetRenderDrawColor(renderer, background_color_.r, background_color_.g, background_color_.b,
         background_color_.a);
     SDL_RenderFillRect(renderer, &rect_);
@@ -60,13 +62,14 @@ void TextBox::draw(SDL_Renderer *renderer, TTF_Font *font) {
         dst.y = rect_.y + (rect_.h - dst.h) / 2.0f;
         SDL_RenderTexture(renderer, texture_, nullptr, &dst);
     }
+    prev_text_ = text_;
 }
 
 void TextBox::updateCache(SDL_Renderer *renderer, TTF_Font *font) {
     if (texture_) SDL_DestroyTexture(texture_);
     if (fixed_font_size_ != 0) TTF_SetFontSize(font, fixed_font_size_);
     else TTF_SetFontSize(font, 0.75f*rect_.h);
-    
+
     if (!text_.empty()) {
         SDL_Surface *surface = TTF_RenderText_Blended(font, text_.c_str(), text_.size(), text_color_);
         texture_ = SDL_CreateTextureFromSurface(renderer, surface);
@@ -380,6 +383,7 @@ void TerminalInput::parseCommand() {
 
 void TerminalInput::draw(SDL_Renderer *renderer, TTF_Font *font) {
     if (!visible_) return;
+    if (text_ != prev_text_) updateCache(renderer, font);
     if (SDL_GetTicks() - typing_timestamp_ > BLINK_DURATION_MS) {
         typing_state_ = false;
     } else {
@@ -411,6 +415,7 @@ void TerminalInput::draw(SDL_Renderer *renderer, TTF_Font *font) {
                 SDL_RenderFillRect(renderer, &cursor_rect);
         }
     }
+    prev_text_ = text_;
 }
 
 

@@ -42,6 +42,7 @@ class TextBox : public UIElement {
 protected:
    SDL_Texture *texture_ = nullptr;
    std::string text_;
+   std::string prev_text_;
    SDL_Color text_color_;
    float text_w_ = 0, text_h_ = 0;
    int fixed_font_size_;
