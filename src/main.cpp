@@ -11,6 +11,9 @@
 #include "Cell.hpp"
 #include "SDL3/SDL_main.h"
 
+int movePlayer(AppState *state, int index);
+void revealCell(AppState *state, int index);
+
 std::string getAssetPath(const std::string &relative) {
     const char *base = SDL_GetBasePath();
     if (!base) {
@@ -53,7 +56,7 @@ void spOnClick(AppState *state) {
     SDL_StartTextInput(state->window);
 }
 
-std::string parseCommand(std::string command) {
+std::string parseCommand(AppState* state, std::string command) {
     std::cout<< command << std::endl;
     if (command.length() < 3) {
         return "invalid input";
@@ -61,15 +64,15 @@ std::string parseCommand(std::string command) {
         if (command.substr(0,3) == "loc") {
             if (!(command.length() == 5 || command.length()==8)) return "invalid loc command";
             if (command.substr(3,2) == "++") {
-                //movePlayer(state, current+1); // not sure how we are getting current other than from state
+                movePlayer(state, state->board->getPlayer().getLocation()+1); // not sure how we are getting current other than from state
                 return "right";
             }
             else if (command.substr(3,2) == "--") {
-                //movePlayer(state, current-1); // not sure how we are getting current other than from state
+                movePlayer(state, state->board->getPlayer().getLocation()-1); // not sure how we are getting current other than from state
                 return "left";
             } else if (command.substr(3,3)=="=0x") {
                 // DOES NOT HANDLE an invalid HEX input
-                //movePlayer(state,std::stoi(command.substr(6),nullptr,16));
+                movePlayer(state,std::stoi(command.substr(6),nullptr,16));
                 return to_string(std::stoi(command.substr(6),nullptr,16));
             }else {
                 return "invalid loc command";
@@ -254,6 +257,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
         .terminal(terminal)
         .build();
     input_box->commandParser = parseCommand;
+    input_box->setAppState(newstate);  // Add this line!
     newstate->sp_menu_els.push_back(input_box); // number 302
     newstate->terminal_input = input_box;
 

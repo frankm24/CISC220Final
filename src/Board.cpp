@@ -178,20 +178,15 @@ Cell *Board::getGrid() {
     return grid;
 }
 
-int Board::getNumRevealed() {
-    return num_revealed;
+Player Board::getPlayer() {
+    return my_player;
 }
 
-Player& Board::getPlayer() {
-    return my_player;
+int Board::getNumRevealed() {
+    return num_revealed;
 }
 
 int Board::incrementNumRevealed() {
     return num_revealed++;
 }
 
-
-
-//testing below:
-//Board testDefault = Board();
-//not deleting

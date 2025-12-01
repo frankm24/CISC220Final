@@ -154,7 +154,7 @@ public:
 };
 
 class TerminalInput final : public TextBox {
-   using Callback = std::function<std::string(std::string)>;
+   using Callback = std::function<std::string(AppState*, std::string)>;
    friend class TerminalInputBuilder;
 protected:
    std::string input_text_;
@@ -166,7 +166,9 @@ protected:
    bool typing_state_ = false;
    TerminalInput(float x_scale, float y_scale, float w_scale, float h_scale, SDL_Color background_color,
     std::string text, SDL_Color text_color, int font_size, TextAlignment text_align_x, Terminal *terminal);
+   AppState* app_state_ = nullptr;
 public:
+   void setAppState(AppState* state) { app_state_ = state; }
    static constexpr Uint64 BLINK_DURATION_MS = 500;
    Callback commandParser; // Should return the command's "output" string to be saved to the commandHistory
    void addChars(const char *text);

@@ -26,9 +26,9 @@ public:
     int unlockObject(int loc);
     int unlockUnit(int loc);
     Cell *getGrid();
+    Player getPlayer();
     int getNumRevealed();
     int incrementNumRevealed();
-    Player& getPlayer();
 };
 
 // Helper function:
