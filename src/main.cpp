@@ -37,6 +37,7 @@ struct AppState {
     int mouse_x = 0;
     int mouse_y = 0;
     UIState ui_state = UIState::MainMenu;
+    Board *board;
 };
 
 void spOnClick(AppState *state) {
@@ -54,14 +55,36 @@ std::string parseCommand(std::string command) {
     return "Successfully did thing";
 }
 
-int revealCell(AppState *state, Board& board, int index) {
-    board.getGrid()[index].reveal();
+void revealCell(AppState *state, int index) {
+    state->board->getGrid()[index].reveal();
     state->sp_menu_els[(std::ceil((256.0-index)/16)*16-(15-index%16))]->setColor({0,255,0,0});
     std::string y = "0x";
     y.push_back(toHexDigit(index/16));
     y.push_back(toHexDigit(index%16));
-    y = y +" data: " + board.getGrid()[index].getData();
+    y = y +" data: " + state->board->getGrid()[index].getData();
     state->terminal->addLine(y);
+}
+
+int movePlayer(AppState *state, int index) {
+    int old = state->board->getPlayer().getLocation();
+    if (old == index) {
+        return 0;
+    }
+    if (state->board->getPlayer().movePlayer(index)) {
+       return 0;
+    }
+    revealCell(state, index);
+    UIElement *cell = state->sp_menu_els[(std::ceil((256.0-old)/16)*16-(15-old%16))];
+    if (TextBox* element = dynamic_cast<TextBox*>(cell)) {
+        element->setText("A");
+        // Ideally we would set this to a char representing the cell's data type, but I didn't find an easy way to do it
+        element->updateCache(state->renderer,state->ui_font);
+    }
+    cell = state->sp_menu_els[(std::ceil((256.0-index)/16)*16-(15-index%16))];
+    if (TextBox* element = dynamic_cast<TextBox*>(cell)) {
+        element->setText(":)");
+        element->updateCache(state->renderer,state->ui_font);
+    }
     return 1;
 }
 
@@ -118,7 +141,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
         return SDL_APP_FAILURE;
     }
 
-    Board testDefault = Board();
+    newstate->board = new Board();
 
     TextBox *squares = TextBoxBuilder()
         .position(.06, .1)
@@ -134,6 +157,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
             TextBox *square = TextBoxBuilder()
                 .position(0.06 + 0.03*j, 0.1 + 0.05 * i)
                 .size(0.03, 0.05)
+                .fontSize(20)
                 .backgroundColor({0, 0, 255, 255})
                 .text("?")
                 .textColor({0, 0, 0, 255})
@@ -198,7 +222,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
             .position(0.19, 0.02)
             .size(0.03, 0.05)
             .backgroundColor({0, 0, 0, 255})
-            .text("squares explored: " + std::to_string(testDefault.getNumRevealed()) + "/256")
+            .text("squares explored: " + std::to_string(newstate->board->getNumRevealed()) + "/256")
             .textColor({255, 255, 255, 255})
             .fontSize(20)
             .build();
@@ -208,7 +232,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
             .position(0.6, 0.02)
             .size(0.03, 0.05)
             .backgroundColor({0, 0, 0, 255})
-            .text("moves left: " + std::to_string(testDefault.getPlayer().getMoves()))
+            .text("moves left: " + std::to_string(newstate->board->getPlayer().getMoves()))
             .textColor({255, 255, 255, 255})
             .fontSize(20)
             .build();
@@ -234,7 +258,10 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
         .build();
     newstate->main_menu_els.push_back(sp_button);
 
-    revealCell(newstate,testDefault,0);
+    revealCell(newstate,0);
+    if (TextBox* element = dynamic_cast<TextBox*>(newstate->sp_menu_els[241])) {
+        element->setText(":)");
+    }
 
     for (UIElement *el : newstate->main_menu_els) {
         el->computeBounds(drawable_w, drawable_h);
@@ -344,6 +371,7 @@ void SDL_AppQuit(void *appstate, SDL_AppResult result) {
         if (state->ui_font) TTF_CloseFont(state->ui_font);
         if (state->renderer) SDL_DestroyRenderer(state->renderer);
         if (state->window) SDL_DestroyWindow(state->window);
+        if (state->board) delete state->board;
         delete state;
     }
     TTF_Quit();

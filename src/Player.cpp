@@ -19,6 +19,7 @@ int Player::movePlayer(int loc) {
         location = loc;
         return 0;
     }
+    moves--;
     return -1;
 }
 
