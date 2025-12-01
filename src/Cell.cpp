@@ -19,10 +19,14 @@ Cell::~Cell() {
 }
 
 void Cell::reveal() {
-
+isRevealed = true;
 }
 
 string Cell::getData() {
     return data;
+}
+
+bool Cell::isRevealed_() {
+    return isRevealed;
 }
 

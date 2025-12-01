@@ -28,6 +28,7 @@ public:
    bool containsPoint(int px, int py) const;
    void setVisible(bool is_visible);
    bool isVisible() const;
+   void setColor(SDL_Color color);
 
    virtual void draw(SDL_Renderer *renderer, TTF_Font *font) = 0;
    virtual void updateCache(SDL_Renderer *renderer, TTF_Font *font) = 0;

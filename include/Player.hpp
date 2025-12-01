@@ -14,6 +14,8 @@ class Player{
 public:
     Player();
     int movePlayer(int loc);
+    int getMoves();
+    int getLocation();
 };
 
 #endif //CISC220FINAL_PLAYER_H

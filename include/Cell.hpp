@@ -20,6 +20,7 @@ public:
     ~Cell();
     void reveal(); // show pointer in terminal and update reveal
     string getData();
+    bool isRevealed_();
 };
 
 #endif //CISC220FINAL_UNIT_H

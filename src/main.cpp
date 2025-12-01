@@ -1,6 +1,7 @@
 #include "SDL3/SDL.h"
 
 #define SDL_MAIN_USE_CALLBACKS
+#include <cmath>
 #include <vector>
 
 #include "Board.hpp"
@@ -51,6 +52,17 @@ void spOnClick(AppState *state) {
 
 std::string parseCommand(std::string command) {
     return "Successfully did thing";
+}
+
+int revealCell(AppState *state, Board& board, int index) {
+    board.getGrid()[index].reveal();
+    state->sp_menu_els[(std::ceil((256.0-index)/16)*16-(15-index%16))]->setColor({0,255,0,0});
+    std::string y = "0x";
+    y.push_back(toHexDigit(index/16));
+    y.push_back(toHexDigit(index%16));
+    y = y +" data: " + board.getGrid()[index].getData();
+    state->terminal->addLine(y);
+    return 1;
 }
 
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-platform main function
@@ -116,7 +128,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
         .text("b")
         .build();
     //Adds squares, a white box that is behind the actual squares.
-    newstate->sp_menu_els.push_back(squares);
+    newstate->sp_menu_els.push_back(squares); // number 0
     for (int i = 0; i < 16; i++) {
         for (int j = 0; j < 16; j++) {
             TextBox *square = TextBoxBuilder()
@@ -127,7 +139,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
                 .textColor({0, 0, 0, 255})
                 .build();
             //Adds a 16x16 grid of squares
-            newstate->sp_menu_els.push_back(square);
+            newstate->sp_menu_els.push_back(square); // numbers 1-256
         }
     }
     // Labels
@@ -140,7 +152,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
             .textColor({255, 255, 255, 255})
             .fontSize(40)
             .build();
-        newstate->sp_menu_els.push_back(square);
+        newstate->sp_menu_els.push_back(square); // numbers 257-272
     }
     for (int i = 0; i < 16; i++) {
         TextBox *square = TextBoxBuilder()
@@ -151,7 +163,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
             .textColor({255, 255, 255, 255})
             .fontSize(40)
             .build();
-        newstate->sp_menu_els.push_back(square);
+        newstate->sp_menu_els.push_back(square); // numbers 273-288
     }
     TextBox *terminal_label = TextBoxBuilder()
         .position(.6, .1)
@@ -160,17 +172,16 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
         .text("* Terminal *")
         .textColor({255, 255, 255, 255})
         .build();
-    newstate->sp_menu_els.push_back(terminal_label);
+    newstate->sp_menu_els.push_back(terminal_label); // number 289
 
     int numItems = 12;
     Terminal *terminal = new Terminal({255, 255, 255, 0}, {0, 0, 0, 0},
         .6, .13, .35, .4, numItems);
     newstate->terminal = terminal;
     for (int i = 0; i < numItems; i++) {
-        terminal->addLine("Identified hashmap");
-        newstate->sp_menu_els.push_back(terminal->getLine(i));
+        terminal->addLine("-------------------------");
+        newstate->sp_menu_els.push_back(terminal->getLine(i)); // numbers 290-301
     }
-    terminal->addLine("Identified array");
     TerminalInput *input_box = TerminalInputBuilder()
         .position(0.6, 0.6)
         .size(.35, .05)
@@ -180,18 +191,28 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
         .terminal(terminal)
         .build();
     input_box->commandParser = parseCommand;
-    newstate->sp_menu_els.push_back(input_box);
+    newstate->sp_menu_els.push_back(input_box); // number 302
     newstate->terminal_input = input_box;
 
     TextBox *score = TextBoxBuilder()
-            .position(0.15, 0.02)
+            .position(0.19, 0.02)
             .size(0.03, 0.05)
             .backgroundColor({0, 0, 0, 255})
-            .text("squares explored: " + std::to_string(testDefault.getNumRevealed()))
+            .text("squares explored: " + std::to_string(testDefault.getNumRevealed()) + "/256")
             .textColor({255, 255, 255, 255})
             .fontSize(20)
             .build();
-    newstate->sp_menu_els.push_back(score);
+    newstate->sp_menu_els.push_back(score); // number 303
+
+    TextBox *moves = TextBoxBuilder()
+            .position(0.6, 0.02)
+            .size(0.03, 0.05)
+            .backgroundColor({0, 0, 0, 255})
+            .text("moves left: " + std::to_string(testDefault.getPlayer().getMoves()))
+            .textColor({255, 255, 255, 255})
+            .fontSize(20)
+            .build();
+    newstate->sp_menu_els.push_back(moves); // number 304
 
     TextBox *title = TextBoxBuilder()
         .position(0, 0.2)
@@ -212,6 +233,9 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
         .onClick(spOnClick)
         .build();
     newstate->main_menu_els.push_back(sp_button);
+
+    revealCell(newstate,testDefault,0);
+
     for (UIElement *el : newstate->main_menu_els) {
         el->computeBounds(drawable_w, drawable_h);
         el->updateCache(newstate->renderer, newstate->ui_font);

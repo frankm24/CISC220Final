@@ -182,6 +182,11 @@ int Board::getNumRevealed() {
     return num_revealed;
 }
 
+Player& Board::getPlayer() {
+    return my_player;
+}
+
+
 
 //testing below:
 //Board testDefault = Board();

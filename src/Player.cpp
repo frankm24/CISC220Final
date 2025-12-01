@@ -21,3 +21,11 @@ int Player::movePlayer(int loc) {
     }
     return -1;
 }
+
+int Player::getLocation() {
+    return location;
+}
+
+int Player::getMoves() {
+    return moves;
+}

@@ -25,6 +25,7 @@ public:
     int unlockUnit(int loc);
     Cell *getGrid();
     int getNumRevealed();
+    Player& getPlayer();
 };
 
 #endif //CISC220FINAL_BOARD_H
