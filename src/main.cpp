@@ -3,12 +3,16 @@
 #define SDL_MAIN_USE_CALLBACKS
 #include <cmath>
 #include <vector>
+#include <string>
 
 #include "Board.hpp"
 #include "murphy_util.hpp"
 #include "ui.hpp"
 #include "Cell.hpp"
 #include "SDL3/SDL_main.h"
+
+std::string movePlayer(AppState *state, int index);
+std::string revealCell(AppState *state, int index);
 
 std::string getAssetPath(const std::string &relative) {
     const char *base = SDL_GetBasePath();
@@ -52,33 +56,60 @@ void spOnClick(AppState *state) {
     SDL_StartTextInput(state->window);
 }
 
-std::string parseCommand(std::string command) {
+std::string parseCommand(AppState* state, std::string command) {
+    std::cout<< command << std::endl;
+    if (command.length() < 3) {
+        return "invalid input";
+    } else {
+        if (command.substr(0,3) == "loc") {
+            if (!(command.length() == 5 || command.length()==8)) return "invalid loc command";
+            if (command.substr(3,2) == "++") {
+                std::cout<<state->board->getPlayer().getLocation()<<std::endl;
+                return movePlayer(state, state->board->getPlayer().getLocation()+1); // not sure how we are getting current other than from state
+            }
+            else if (command.substr(3,2) == "--") {
+                return movePlayer(state, state->board->getPlayer().getLocation()-1); // not sure how we are getting current other than from state
+            } else if (command.substr(3,3)=="=0x") {
+                // DOES NOT HANDLE an invalid HEX input
+                return movePlayer(state,std::stoi(command.substr(6),nullptr,16));
+                // return to_string(std::stoi(command.substr(6),nullptr,16));
+            }else {
+                return "invalid loc command";
+            }
+        } else if (command.substr(0,2) == "id") {
+            //return idStructure(command.substr(3)) <- handles comparing
+            //returns a string that will either say successful and reveal or failure
+            return "id";
+        } else {
+            return "invalid input";
+        }
+    }
     return "Successfully did thing";
 }
 
-void revealCell(AppState *state, int index) {
+std::string revealCell(AppState *state, int index) {
     state->board->getGrid()[index].reveal();
     state->board->incrementNumRevealed();
     state->sp_menu_els[(std::ceil((256.0-index)/16)*16-(15-index%16))]->setColor({0,255,0,0});
     std::string y = "0x";
     y.push_back(toHexDigit(index/16));
     y.push_back(toHexDigit(index%16));
-    y = y +" data: " + state->board->getGrid()[index].getData();
-    state->terminal->addLine(y);
+    return y = y +" data: " + state->board->getGrid()[index].getData();
+    // return state->terminal->addLine(y);
 }
 
-int movePlayer(AppState *state, int index) {
+std::string movePlayer(AppState *state, int index) {
     int old = state->board->getPlayer().getLocation();
     if (old == index) {
-        return 0;
+        return "";
     }
     if (state->board->getPlayer().movePlayer(index)) {
-       return 0;
+       return "";
     }
     if (TextBox* element = dynamic_cast<TextBox*>(state->sp_menu_els[304])) {
         element->setText("moves left: " + std::to_string(state->board->getPlayer().getMoves()));
     }
-    revealCell(state, index);
+    std::string out = revealCell(state, index);
     if (TextBox* element = dynamic_cast<TextBox*>(state->sp_menu_els[303])) {
         element->setText("squares explored: " + std::to_string(state->board->getNumRevealed()) + "/256");
     }
@@ -91,7 +122,7 @@ int movePlayer(AppState *state, int index) {
     if (TextBox* element = dynamic_cast<TextBox*>(cell)) {
         element->setText(":)");
     }
-    return 1;
+    return out;
 }
 
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-platform main function
@@ -221,6 +252,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
         .terminal(terminal)
         .build();
     input_box->commandParser = parseCommand;
+    input_box->setAppState(newstate);  // Add this line!
     newstate->sp_menu_els.push_back(input_box); // number 302
     newstate->terminal_input = input_box;
 

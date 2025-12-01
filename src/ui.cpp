@@ -373,7 +373,7 @@ void TerminalInput::handleBackspace() {
 
 void TerminalInput::parseCommand() {
     if (input_text_.empty()) return;
-    std::string output = commandParser(input_text_);
+    std::string output = commandParser(app_state_, input_text_);
     if (!output.empty()) {
         input_text_ = std::string();
         text_ = static_text_ + input_text_;
