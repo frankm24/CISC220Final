@@ -11,8 +11,8 @@
 #include "Cell.hpp"
 #include "SDL3/SDL_main.h"
 
-int movePlayer(AppState *state, int index);
-void revealCell(AppState *state, int index);
+std::string movePlayer(AppState *state, int index);
+std::string revealCell(AppState *state, int index);
 
 std::string getAssetPath(const std::string &relative) {
     const char *base = SDL_GetBasePath();
@@ -64,16 +64,15 @@ std::string parseCommand(AppState* state, std::string command) {
         if (command.substr(0,3) == "loc") {
             if (!(command.length() == 5 || command.length()==8)) return "invalid loc command";
             if (command.substr(3,2) == "++") {
-                movePlayer(state, state->board->getPlayer().getLocation()+1); // not sure how we are getting current other than from state
-                return "right";
+                std::cout<<state->board->getPlayer().getLocation()<<std::endl;
+                return movePlayer(state, state->board->getPlayer().getLocation()+1); // not sure how we are getting current other than from state
             }
             else if (command.substr(3,2) == "--") {
-                movePlayer(state, state->board->getPlayer().getLocation()-1); // not sure how we are getting current other than from state
-                return "left";
+                return movePlayer(state, state->board->getPlayer().getLocation()-1); // not sure how we are getting current other than from state
             } else if (command.substr(3,3)=="=0x") {
                 // DOES NOT HANDLE an invalid HEX input
-                movePlayer(state,std::stoi(command.substr(6),nullptr,16));
-                return to_string(std::stoi(command.substr(6),nullptr,16));
+                return movePlayer(state,std::stoi(command.substr(6),nullptr,16));
+                // return to_string(std::stoi(command.substr(6),nullptr,16));
             }else {
                 return "invalid loc command";
             }
@@ -88,30 +87,30 @@ std::string parseCommand(AppState* state, std::string command) {
     return "Successfully did thing";
 }
 
-void revealCell(AppState *state, int index) {
+std::string revealCell(AppState *state, int index) {
     state->board->getGrid()[index].reveal();
     state->board->incrementNumRevealed();
     state->sp_menu_els[(std::ceil((256.0-index)/16)*16-(15-index%16))]->setColor({0,255,0,0});
     std::string y = "0x";
     y.push_back(toHexDigit(index/16));
     y.push_back(toHexDigit(index%16));
-    y = y +" data: " + state->board->getGrid()[index].getData();
-    state->terminal->addLine(y);
+    return y = y +" data: " + state->board->getGrid()[index].getData();
+    // return state->terminal->addLine(y);
 }
 
-int movePlayer(AppState *state, int index) {
+std::string movePlayer(AppState *state, int index) {
     int old = state->board->getPlayer().getLocation();
     if (old == index) {
-        return 0;
+        return "";
     }
     if (state->board->getPlayer().movePlayer(index)) {
-       return 0;
+       return "";
     }
     if (TextBox* element = dynamic_cast<TextBox*>(state->sp_menu_els[304])) {
         element->setText("moves left: " + std::to_string(state->board->getPlayer().getMoves()));
         element->updateCache(state->renderer,state->ui_font);
     }
-    revealCell(state, index);
+    std::string out = revealCell(state, index);
     if (TextBox* element = dynamic_cast<TextBox*>(state->sp_menu_els[303])) {
         element->setText("squares explored: " + std::to_string(state->board->getNumRevealed()) + "/256");
         element->updateCache(state->renderer,state->ui_font);
@@ -127,7 +126,7 @@ int movePlayer(AppState *state, int index) {
         element->setText(":)");
         element->updateCache(state->renderer,state->ui_font);
     }
-    return 1;
+    return out;
 }
 
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-platform main function

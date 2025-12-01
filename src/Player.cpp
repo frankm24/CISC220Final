@@ -4,8 +4,12 @@
 
 #include "../include/Player.hpp"
 
+#include <iostream>
+#include <ostream>
+
 
 Player::Player() {
+    std::cout<<"Created a new player"<<std::endl;
     location = 0x00; //"selected" - "0x##"
     moves = 50; // default?
     color = 0x0000FF; // blue
@@ -20,8 +24,8 @@ int Player::movePlayer(int loc) {
         moves--;
         return 0;
     }
-    return -1;
 }
+
 
 int Player::getLocation() {
     return location;

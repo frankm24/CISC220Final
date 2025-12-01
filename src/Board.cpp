@@ -178,7 +178,7 @@ Cell *Board::getGrid() {
     return grid;
 }
 
-Player Board::getPlayer() {
+Player &Board::getPlayer() {
     return my_player;
 }
 
