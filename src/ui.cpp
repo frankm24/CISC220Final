@@ -27,6 +27,10 @@ bool UIElement::isVisible() const {
     return visible_;
 }
 
+void UIElement::setColor(SDL_Color color) {
+    background_color_ = color;
+}
+
 TextBox::TextBox(float x_scale, float y_scale, float w_scale, float h_scale, SDL_Color background_color,
     std::string text, SDL_Color text_color, int font_size, TextAlignment text_align_x)
     : UIElement(x_scale, y_scale, w_scale, h_scale, background_color), text_(std::move(text)),

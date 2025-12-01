@@ -17,7 +17,16 @@ Player::Player() {
 int Player::movePlayer(int loc) {
     if (loc < 256) {
         location = loc;
+        moves--;
         return 0;
     }
     return -1;
+}
+
+int Player::getLocation() {
+    return location;
+}
+
+int Player::getMoves() {
+    return moves;
 }
