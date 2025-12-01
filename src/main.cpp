@@ -3,6 +3,7 @@
 #define SDL_MAIN_USE_CALLBACKS
 #include <cmath>
 #include <vector>
+#include <string>
 
 #include "Board.hpp"
 #include "murphy_util.hpp"
@@ -55,20 +56,30 @@ void spOnClick(AppState *state) {
 std::string parseCommand(std::string command) {
     std::cout<< command << std::endl;
     if (command.length() < 3) {
-        return "provide valid input";
+        return "invalid input";
     } else {
         if (command.substr(0,3) == "loc") {
-            if (command.length() < 5) return "provide valid loc command";
-            if (command.substr(3,5) == "++") {
-            //move right
+            if (!(command.length() == 5 || command.length()==8)) return "invalid loc command";
+            if (command.substr(3,2) == "++") {
+                //movePlayer(state, current+1); // not sure how we are getting current other than from state
+                return "right";
             }
-            else if (command.substr(3,5) == "--") {
-                //move left
-            }else if (command.length() !=8) {
-                return "provide valid loc command";
-            } else {
-                //to implement specific location move
+            else if (command.substr(3,2) == "--") {
+                //movePlayer(state, current-1); // not sure how we are getting current other than from state
+                return "left";
+            } else if (command.substr(3,3)=="=0x") {
+                // DOES NOT HANDLE an invalid HEX input
+                //movePlayer(state,std::stoi(command.substr(6),nullptr,16));
+                return to_string(std::stoi(command.substr(6),nullptr,16));
+            }else {
+                return "invalid loc command";
             }
+        } else if (command.substr(0,2) == "id") {
+            //return idStructure(command.substr(3)) <- handles comparing
+            //returns a string that will either say successful and reveal or failure
+            return "id";
+        } else {
+            return "invalid input";
         }
     }
     return "Successfully did thing";
