@@ -25,6 +25,7 @@ public:
     int unlockUnit(int loc);
     Cell *getGrid();
     int getNumRevealed();
+    int incrementNumRevealed();
     Player& getPlayer();
 };
 

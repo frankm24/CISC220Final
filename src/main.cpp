@@ -57,6 +57,7 @@ std::string parseCommand(std::string command) {
 
 void revealCell(AppState *state, int index) {
     state->board->getGrid()[index].reveal();
+    state->board->incrementNumRevealed();
     state->sp_menu_els[(std::ceil((256.0-index)/16)*16-(15-index%16))]->setColor({0,255,0,0});
     std::string y = "0x";
     y.push_back(toHexDigit(index/16));
@@ -73,7 +74,15 @@ int movePlayer(AppState *state, int index) {
     if (state->board->getPlayer().movePlayer(index)) {
        return 0;
     }
+    if (TextBox* element = dynamic_cast<TextBox*>(state->sp_menu_els[304])) {
+        element->setText("moves left: " + std::to_string(state->board->getPlayer().getMoves()));
+        element->updateCache(state->renderer,state->ui_font);
+    }
     revealCell(state, index);
+    if (TextBox* element = dynamic_cast<TextBox*>(state->sp_menu_els[303])) {
+        element->setText("squares explored: " + std::to_string(state->board->getNumRevealed()) + "/256");
+        element->updateCache(state->renderer,state->ui_font);
+    }
     UIElement *cell = state->sp_menu_els[(std::ceil((256.0-old)/16)*16-(15-old%16))];
     if (TextBox* element = dynamic_cast<TextBox*>(cell)) {
         element->setText("A");

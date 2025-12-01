@@ -17,9 +17,9 @@ Player::Player() {
 int Player::movePlayer(int loc) {
     if (loc < 256) {
         location = loc;
+        moves--;
         return 0;
     }
-    moves--;
     return -1;
 }
 
