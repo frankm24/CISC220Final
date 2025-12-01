@@ -2,7 +2,10 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <sstream>
 #include "Cell.hpp"
+#include "Board.hpp"
+#include <boost/algorithm/string.hpp>
 class DLLNode;
 class BSTNode;
 using namespace std;
@@ -18,13 +21,16 @@ class Structure{
     friend class Node;
     friend class BSTNode;
     friend class DLLNode;
+    friend class Cell;
+    int loc;
     int size;
+    string id;
     vector<Cell*> members;
 public:
     Structure();
     Structure(int sz);
+    Structure(int sz, int lc);
     virtual ~Structure();
-    virtual Structure* generateStructure();
 };
 
 class Heap : Structure {
@@ -34,6 +40,7 @@ public:
     Heap();
     Heap(int sz);
     Heap(int sz, vector<string> dta);
+    Heap(int sz, int lc, vector<string> dta);
     //~Heap();
 };
 
@@ -45,6 +52,7 @@ public:
     Graph();
     Graph(int sz); //must be an even square
     Graph(int sz, vector<vector<int>> dta);
+    Graph(int sz, int lc, vector<vector<int>> dta);
     //~Graph();
 };
 
@@ -58,6 +66,7 @@ public:
     Matrix();
     Matrix(int sz);
     Matrix(int sz, int n, int m, vector<vector<string>> dta, vector<string> ptrs);
+    Matrix(int sz, int lc, int n, int m, vector<vector<string>> dta, vector<string> ptrs);
     //~Matrix();
 };
 
@@ -70,6 +79,7 @@ public:
     BST();
     BST(int sz);
     BST(int sz, vector<BSTNode*> nds, string rt);
+    BST(int sz, int lc, vector<BSTNode*> nds, string rt);
 };
 
 class DLL : Structure {
@@ -82,6 +92,7 @@ public:
     DLL();
     DLL(int sz);
     DLL(int sz, vector<DLLNode*> nds, string frst, string lst);
+    DLL(int sz, int lc, vector<DLLNode*> nds, string frst, string lst);
 };
 
 class Node : Structure {
@@ -105,7 +116,9 @@ class BSTNode : Node {
 public:
     BSTNode();
     BSTNode(string dta);
+    BSTNode(string dta, int lc);
     BSTNode(string dta, string lft, string rgt);
+    BSTNode(string dta, int lc, string lft, string rgt);
     //~BSTNode();
 };
 
@@ -117,5 +130,6 @@ class DLLNode : Node {
 public:
     DLLNode();
     DLLNode(string dta, string lst, string nxt);
+    DLLNode(string dta, int lc, string lst, string nxt);
     //~DLLNode();
 };

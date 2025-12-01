@@ -6,6 +6,7 @@
 #include "Board.hpp"
 #include "murphy_util.hpp"
 #include "ui.hpp"
+#include "Cell.hpp"
 #include "SDL3/SDL_main.h"
 
 std::string getAssetPath(const std::string &relative) {

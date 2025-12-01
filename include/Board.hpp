@@ -3,7 +3,9 @@
 #include "Cell.hpp"
 #include "../include/Player.hpp"
 #include <vector>
+#include <sstream>
 using std::vector;
+using namespace std;
 
 class Board{
     friend class Player;
@@ -26,5 +28,17 @@ public:
     Cell *getGrid();
     int getNumRevealed();
 };
+
+// Helper function:
+inline string convertToHex(int num) {
+
+    stringstream ss; // Create a stringstream object
+
+    ss << hex << num; // Set to hex format and insert the number
+
+    string hexString = "0x"+ss.str(); // Get the hexadecimal string
+    return hexString;
+
+}
 
 #endif //CISC220FINAL_BOARD_H
