@@ -41,12 +41,12 @@ TextBox::~TextBox() {
     if (texture_) SDL_DestroyTexture(texture_);
 }
 
-void TextBox::draw(SDL_Renderer *renderer, TTF_Font *font) {
+void TextBox::draw(const UIRenderContext& c) {
     if (!visible_) return;
-    if (text_ != prev_text_) updateCache(renderer, font);
-    SDL_SetRenderDrawColor(renderer, background_color_.r, background_color_.g, background_color_.b,
+    if (text_ != prev_text_) updateCache(c);
+    SDL_SetRenderDrawColor(c.renderer, background_color_.r, background_color_.g, background_color_.b,
         background_color_.a);
-    SDL_RenderFillRect(renderer, &rect_);
+    SDL_RenderFillRect(c.renderer, &rect_);
     if (texture_) {
         SDL_FRect dst;
         dst.w = text_w_;
@@ -60,19 +60,19 @@ void TextBox::draw(SDL_Renderer *renderer, TTF_Font *font) {
                 break;
         }
         dst.y = rect_.y + (rect_.h - dst.h) / 2.0f;
-        SDL_RenderTexture(renderer, texture_, nullptr, &dst);
+        SDL_RenderTexture(c.renderer, texture_, nullptr, &dst);
     }
     prev_text_ = text_;
 }
 
-void TextBox::updateCache(SDL_Renderer *renderer, TTF_Font *font) {
+void TextBox::updateCache(const UIRenderContext& c) {
     if (texture_) SDL_DestroyTexture(texture_);
-    if (fixed_font_size_ != 0) TTF_SetFontSize(font, fixed_font_size_);
-    else TTF_SetFontSize(font, 0.75f*rect_.h);
+    if (fixed_font_size_ != 0) TTF_SetFontSize(c.font, fixed_font_size_ * c.dpi_scale / UI_REF_SCALE);
+    else TTF_SetFontSize(c.font, 0.75f*rect_.h);
 
     if (!text_.empty()) {
-        SDL_Surface *surface = TTF_RenderText_Blended(font, text_.c_str(), text_.size(), text_color_);
-        texture_ = SDL_CreateTextureFromSurface(renderer, surface);
+        SDL_Surface *surface = TTF_RenderText_Blended(c.font, text_.c_str(), text_.size(), text_color_);
+        texture_ = SDL_CreateTextureFromSurface(c.renderer, surface);
         SDL_SetTextureScaleMode(texture_, SDL_SCALEMODE_NEAREST);
         text_w_ = static_cast<float>(surface->w);
         text_h_ = static_cast<float>(surface->h);
@@ -177,9 +177,9 @@ TextBox *Terminal::getLine(int index) {
     return text_boxes_[index];
 }
 
-void Terminal::updateCache(SDL_Renderer *renderer, TTF_Font *font) {
+void Terminal::updateCache(const UIRenderContext& c) {
     for (int i = 0; i < num_items_; i++) {
-        getLine(i)->updateCache(renderer, font);
+        getLine(i)->updateCache(c);
     }
 }
 
@@ -202,7 +202,7 @@ ButtonState Button::getState() {
     return state_;
 }
 
-void Button::draw(SDL_Renderer *renderer, TTF_Font *font) {
+void Button::draw(const UIRenderContext& c) {
     if (!visible_) return;
     SDL_Color color;
     switch (state_) {
@@ -218,15 +218,15 @@ void Button::draw(SDL_Renderer *renderer, TTF_Font *font) {
             color = pressed_color_;
             break;
     }
-    SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
-    SDL_RenderFillRect(renderer, &rect_);
+    SDL_SetRenderDrawColor(c.renderer, color.r, color.g, color.b, color.a);
+    SDL_RenderFillRect(c.renderer, &rect_);
     if (texture_) {
         SDL_FRect dst;
         dst.w = text_w_;
         dst.h = text_h_;
         dst.x = rect_.x + (rect_.w - dst.w) / 2.0f;
         dst.y = rect_.y + (rect_.h - dst.h) / 2.0f;
-        SDL_RenderTexture(renderer, texture_, nullptr, &dst);
+        SDL_RenderTexture(c.renderer, texture_, nullptr, &dst);
     }
 }
 
@@ -381,9 +381,9 @@ void TerminalInput::parseCommand() {
     }
 }
 
-void TerminalInput::draw(SDL_Renderer *renderer, TTF_Font *font) {
+void TerminalInput::draw(const UIRenderContext& c) {
     if (!visible_) return;
-    if (text_ != prev_text_) updateCache(renderer, font);
+    if (text_ != prev_text_) updateCache(c);
     if (SDL_GetTicks() - typing_timestamp_ > BLINK_DURATION_MS) {
         typing_state_ = false;
     } else {
@@ -395,24 +395,24 @@ void TerminalInput::draw(SDL_Renderer *renderer, TTF_Font *font) {
         blink_start_ = SDL_GetTicks();
         blink_state_ = !blink_state_;
     }
-    SDL_SetRenderDrawColor(renderer, background_color_.r, background_color_.g, background_color_.b,
+    SDL_SetRenderDrawColor(c.renderer, background_color_.r, background_color_.g, background_color_.b,
         background_color_.a);
-    SDL_RenderFillRect(renderer, &rect_);
+    SDL_RenderFillRect(c.renderer, &rect_);
     if (texture_) {
         SDL_FRect dst;
         dst.w = text_w_;
         dst.h = text_h_;
         dst.x = rect_.x;
         dst.y = rect_.y + (rect_.h - dst.h) / 2.0f;
-        SDL_RenderTexture(renderer, texture_, nullptr, &dst);
+        SDL_RenderTexture(c.renderer, texture_, nullptr, &dst);
         if (blink_state_ || typing_state_) {
                 SDL_FRect cursor_rect;
                 cursor_rect.x = dst.x + dst.w;
                 cursor_rect.y = dst.y - 1;
                 cursor_rect.h = dst.h + 2;
                 cursor_rect.w = 8;
-                SDL_SetRenderDrawColor(renderer, text_color_.r, text_color_.g, text_color_.b, text_color_.a);
-                SDL_RenderFillRect(renderer, &cursor_rect);
+                SDL_SetRenderDrawColor(c.renderer, text_color_.r, text_color_.g, text_color_.b, text_color_.a);
+                SDL_RenderFillRect(c.renderer, &cursor_rect);
         }
     }
     prev_text_ = text_;

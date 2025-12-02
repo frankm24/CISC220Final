@@ -11,7 +11,7 @@ class BSTNode;
 using namespace std;
 
 
-class Structure{
+class Structure {
     friend class Board;
     friend class Heap;
     friend class Graph;

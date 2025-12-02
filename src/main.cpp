@@ -39,6 +39,7 @@ struct AppState {
     TTF_Font *ui_font = nullptr;
     float dpi_scale_x = 1.0f;
     float dpi_scale_y = 1.0f;
+    float rdpi_scale = UI_REF_SCALE;
     int mouse_x = 0;
     int mouse_y = 0;
     UIState ui_state = UIState::MainMenu;
@@ -47,11 +48,12 @@ struct AppState {
 
 void spOnClick(AppState *state) {
     state->active_els = &state->sp_menu_els;
+    UIRenderContext ctx = UIRenderContext(state->renderer, state->ui_font, state->rdpi_scale);
     for (UIElement *el : *state->active_els) {
         int drawableW, drawableH;
         SDL_GetRenderOutputSize(state->renderer, &drawableW, &drawableH);
         el->computeBounds(drawableW, drawableH);
-        el->updateCache(state->renderer, state->ui_font);
+        el->updateCache(ctx);
     }
     SDL_StartTextInput(state->window);
 }
@@ -161,6 +163,8 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
     newstate->dpi_scale_x = static_cast<float>(drawable_w) / win_w;
     newstate->dpi_scale_y = static_cast<float>(drawable_h) / win_h;
 
+    newstate->rdpi_scale = SDL_GetWindowDisplayScale(newstate->window);
+
     SDL_Log("Logical window %dx%d, Drawable %dx%d, scale=(%f,%f)",
             win_w, win_h, drawable_w, drawable_h,
             newstate->dpi_scale_x, newstate->dpi_scale_y);
@@ -194,7 +198,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
             TextBox *square = TextBoxBuilder()
                 .position(0.06 + 0.03*j, 0.1 + 0.05 * i)
                 .size(0.03, 0.05)
-                .fontSize(20)
+                .fontSize(35)
                 .backgroundColor({0, 0, 255, 255})
                 .text("?")
                 .textColor({0, 0, 0, 255})
@@ -262,7 +266,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
             .backgroundColor({0, 0, 0, 255})
             .text("squares explored: " + std::to_string(newstate->board->getNumRevealed()) + "/256")
             .textColor({255, 255, 255, 255})
-            .fontSize(20)
+            .fontSize(35)
             .build();
     newstate->sp_menu_els.push_back(score); // number 303
 
@@ -272,7 +276,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
             .backgroundColor({0, 0, 0, 255})
             .text("moves left: " + std::to_string(newstate->board->getPlayer().getMoves()))
             .textColor({255, 255, 255, 255})
-            .fontSize(20)
+            .fontSize(35)
             .build();
     newstate->sp_menu_els.push_back(moves); // number 304
 
@@ -300,14 +304,14 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
     if (TextBox* element = dynamic_cast<TextBox*>(newstate->sp_menu_els[241])) {
         element->setText(":)");
     }
-
+    UIRenderContext ctx = UIRenderContext(newstate->renderer, newstate->ui_font, newstate->rdpi_scale);
     for (UIElement *el : newstate->main_menu_els) {
         el->computeBounds(drawable_w, drawable_h);
-        el->updateCache(newstate->renderer, newstate->ui_font);
+        el->updateCache(ctx);
     }
     for (UIElement *el : newstate->sp_menu_els) {
         el->computeBounds(drawable_w, drawable_h);
-        el->updateCache(newstate->renderer, newstate->ui_font);
+        el->updateCache(ctx);
     }
 
     return SDL_APP_CONTINUE;
@@ -315,6 +319,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
 
 SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) { // General event handling function
     AppState *state = static_cast<AppState*>(appstate);
+    UIRenderContext ctx = UIRenderContext(state->renderer, state->ui_font, state->rdpi_scale);
     const float x_win = event->motion.x;
     const float y_win = event->motion.y;
     const int x = static_cast<int>(x_win * state->dpi_scale_x);
@@ -331,7 +336,7 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) { // General event 
 
             for (UIElement *el : *state->active_els) {
                 el->computeBounds(drawable_w, drawable_h);
-                el->updateCache(state->renderer, state->ui_font);
+                el->updateCache(ctx);
             }
             break;
         }
@@ -378,11 +383,12 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) { // General event 
 
 SDL_AppResult SDL_AppIterate(void *appstate) { // Runs once every main loop
     AppState *state = static_cast<AppState*>(appstate);
+    UIRenderContext ctx = UIRenderContext(state->renderer, state->ui_font, state->rdpi_scale);
     SDL_SetRenderDrawColor(state->renderer, 0, 0, 0, 255);
     SDL_RenderClear(state->renderer); // Clears backbuffer, set all pixels to draw color
 
     for (UIElement* el : *state->active_els) {
-        el->draw(state->renderer, state->ui_font);
+        el->draw(ctx);
         if (Button* btn = dynamic_cast<Button*>(el)) {
             // el is actually a Button, so we can do its animation effect
             btn->updateEffect(state->mouse_x, state->mouse_y);

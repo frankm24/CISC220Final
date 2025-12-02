@@ -13,6 +13,14 @@
 
 struct AppState;
 
+constexpr float UI_REF_SCALE = 2.0f; // DO NOT CHANGE
+
+struct UIRenderContext {
+   SDL_Renderer *renderer;
+   TTF_Font *font;
+   float dpi_scale;
+};
+
 enum class TextAlignment { Left, Center };
 
 class UIElement {
@@ -30,8 +38,8 @@ public:
    bool isVisible() const;
    void setColor(SDL_Color color);
 
-   virtual void draw(SDL_Renderer *renderer, TTF_Font *font) = 0;
-   virtual void updateCache(SDL_Renderer *renderer, TTF_Font *font) = 0;
+   virtual void draw(const UIRenderContext& c) = 0;
+   virtual void updateCache(const UIRenderContext& c) = 0;
    virtual void onMouseMotion(int x, int y) {}
    virtual void onMouseDown(int x, int y, AppState *state) {}
    virtual void onMouseUp(int x, int y, AppState *state) {}
@@ -52,8 +60,8 @@ protected:
 public:
    ~TextBox() override;
 
-   void draw(SDL_Renderer *renderer, TTF_Font *font) override;
-   void updateCache(SDL_Renderer *renderer, TTF_Font *font) override;
+   void draw(const UIRenderContext& c) override;
+   void updateCache(const UIRenderContext& c) override;
    std::string getText() const;
    void setText(std::string text);
 };
@@ -94,7 +102,7 @@ public:
    // ~Terminal();
    void addLine(std::string text);
    TextBox *getLine(int index);
-   void updateCache(SDL_Renderer *renderer, TTF_Font *font);
+   void updateCache(const UIRenderContext& c);
 };
 
 enum class ButtonState { Idle, Hovered, Down, Clicked };
@@ -114,7 +122,7 @@ protected:
    Callback onClick = nullptr, Callback onPressImmediate = nullptr);
 public:
    static constexpr Uint64 CLICK_EFFECT_DURATION_MS = 120;
-   void draw(SDL_Renderer *renderer, TTF_Font *font) override;
+   void draw(const UIRenderContext& c) override;
    void onMouseMotion(int x, int y) override;
    void onMouseDown(int x, int y, AppState *state) override;
    void onMouseUp(int x, int y, AppState *state) override;
@@ -175,7 +183,7 @@ public:
    void addChars(const char *text);
    void handleBackspace();
    void parseCommand();
-   void draw(SDL_Renderer *renderer, TTF_Font *font) override;
+   void draw(const UIRenderContext& c) override;
 };
 
 class TerminalInputBuilder {
