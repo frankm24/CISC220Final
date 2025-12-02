@@ -111,9 +111,17 @@ std::string movePlayer(AppState *state, int index) {
     if (TextBox* element = dynamic_cast<TextBox*>(state->sp_menu_els[304])) {
         element->setText("moves left: " + std::to_string(state->board->getPlayer().getMoves()));
     }
-    std::string out = revealCell(state, index);
-    if (TextBox* element = dynamic_cast<TextBox*>(state->sp_menu_els[303])) {
-        element->setText("squares explored: " + std::to_string(state->board->getNumRevealed()) + "/256");
+    std::string out = "";
+    if (!state->board->getGrid()[index].getRevealed()) {
+        if (TextBox* element = dynamic_cast<TextBox*>(state->sp_menu_els[303])) {
+            element->setText("squares explored: " + std::to_string(state->board->getNumRevealed()) + "/256");
+        }
+        out = revealCell(state, index);
+    } else {
+        out = "0x";
+        out.push_back(toHexDigit(index/16));
+        out.push_back(toHexDigit(index%16));
+        out = out +" data: " + state->board->getGrid()[index].getData();
     }
     UIElement *cell = state->sp_menu_els[(std::ceil((256.0-old)/16)*16-(15-old%16))];
     if (TextBox* element = dynamic_cast<TextBox*>(cell)) {
@@ -301,6 +309,11 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
     newstate->main_menu_els.push_back(sp_button);
 
     revealCell(newstate,0);
+    std::string out = "0x";
+    out.push_back(toHexDigit(0/16));
+    out.push_back(toHexDigit(0%16));
+    terminal->addLine(out +" data: " + newstate->board->getGrid()[0].getData());
+
     if (TextBox* element = dynamic_cast<TextBox*>(newstate->sp_menu_els[241])) {
         element->setText(":)");
     }

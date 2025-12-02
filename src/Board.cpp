@@ -14,7 +14,7 @@ using std::endl;
 Board::Board() {
     //    srand(static_cast<unsigned>(time(0))); // this is for randomizing the seed at each run so that the random generated Boards aren't always generated the same
     my_player = Player(); //selected player on local machine
-    num_revealed = 0;
+    num_revealed = 1;
     for (int i = 0; i<256; i++) {
         grid[i] = Cell();
     }
