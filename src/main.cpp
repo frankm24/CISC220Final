@@ -378,16 +378,21 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) { // General event 
             state->terminal_input->addChars(event->text.text);
             break;
         }
-        case SDL_EVENT_KEY_DOWN:
+        case SDL_EVENT_KEY_DOWN: {
             if (state->active_els == &state->sp_menu_els) {
                 if (event->key.key == SDLK_BACKSPACE) {
                     state->terminal_input->handleBackspace();
                 }
                 else if (event->key.key == SDLK_RETURN) {
                     state->terminal_input->parseCommand();
+                } else if (event->key.key == SDLK_UP) {
+                    state->terminal_input->showPrevInput();
+                } else if (event->key.key == SDLK_DOWN) {
+                    state->terminal_input->showNextInput();
                 }
             }
             break;
+        }
         default:
             break;
     }

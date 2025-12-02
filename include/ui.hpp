@@ -90,21 +90,6 @@ public:
    TextBox* build();
 };
 
-class Terminal {
-protected:
-   SDL_Color text_color_;
-   int num_items_;
-   TextBox** text_boxes_;
-   boost::circular_buffer<std::string> command_history_;
-public:
-   Terminal(SDL_Color text_color, SDL_Color background_color, float x_scale, float y_scale, float w_scale,
-    float h_scale, int num_items);
-   // ~Terminal();
-   void addLine(std::string text);
-   TextBox *getLine(int index);
-   void updateCache(const UIRenderContext& c);
-};
-
 enum class ButtonState { Idle, Hovered, Down, Clicked };
 
 class Button : public TextBox {
@@ -162,6 +147,30 @@ public:
    Button* build();
 };
 
+class Terminal {
+protected:
+   SDL_Color text_color_;
+   int num_items_;
+   TextBox** text_boxes_;
+   boost::circular_buffer<std::string> output_history_;
+   std::vector<std::string> input_history_;
+   std::vector<std::string> temp_edits_;
+   int temp_edit_idx_;
+public:
+   Terminal(SDL_Color text_color, SDL_Color background_color, float x_scale, float y_scale, float w_scale,
+    float h_scale, int num_items);
+   // ~Terminal();
+   void addLine(std::string text);
+   TextBox *getLine(int index);
+   void updateCache(const UIRenderContext& c);
+   void resetTempEdits();
+   void appendInputHistory(std::string text);
+   void pushToCurrentTempEdit(std::string text);
+   void popFromCurrentTempEdit();
+   std::string getPrevTempEdit();
+   std::string getNextTempEdit();
+};
+
 class TerminalInput final : public TextBox {
    using Callback = std::function<std::string(AppState*, std::string)>;
    friend class TerminalInputBuilder;
@@ -183,6 +192,8 @@ public:
    void addChars(const char *text);
    void handleBackspace();
    void parseCommand();
+   void showPrevInput();
+   void showNextInput();
    void draw(const UIRenderContext& c) override;
 };
 

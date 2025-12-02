@@ -141,48 +141,6 @@ TextBox* TextBoxBuilder::build() {
     );
 }
 
-Terminal::Terminal(SDL_Color text_color, SDL_Color background_color, float x_scale, float y_scale, float w_scale,
-    float h_scale, int num_items) : text_color_(text_color), command_history_(num_items),
-        num_items_(num_items) {
-    text_boxes_ = new TextBox*[num_items_];
-    const float line_h = h_scale / static_cast<float>(num_items_);
-    for (int i = 0; i < num_items_; ++i) {
-        float line_y = y_scale + h_scale - static_cast<float>(i) * line_h;
-        text_boxes_[i] = TextBoxBuilder{}
-            .position(x_scale, line_y)
-            .size(w_scale, line_h)
-            .backgroundColor(background_color)
-            .text("")
-            .textColor(text_color)
-            .alignX(TextAlignment::Left)
-            .build();
-    }
-}
-
-// Terminal::~Terminal() {
-//     for (int i = 0; i < num_items_; ++i) {
-//         if (text_boxes_[i]) delete text_boxes_[i];
-//     }
-//     delete[] text_boxes_;
-// }
-
-void Terminal::addLine(std::string text) {
-    command_history_.push_front(text);
-    for (int i = 0; i < command_history_.size(); i++) {
-        getLine(i)->setText(command_history_.at(i));
-    }
-}
-
-TextBox *Terminal::getLine(int index) {
-    return text_boxes_[index];
-}
-
-void Terminal::updateCache(const UIRenderContext& c) {
-    for (int i = 0; i < num_items_; i++) {
-        getLine(i)->updateCache(c);
-    }
-}
-
 Button::Button(float x_scale, float y_scale, float w_scale, float h_scale, SDL_Color background_color, std::string text,
     SDL_Color text_color, int font_size, TextAlignment text_align_x, SDL_Color hover_color, Callback onClick,
     Callback onPressImmediate) : TextBox(x_scale, y_scale, w_scale, h_scale, background_color, std::move(text),
@@ -354,6 +312,77 @@ Button* ButtonBuilder::build() {
     );
 }
 
+Terminal::Terminal(SDL_Color text_color, SDL_Color background_color, float x_scale, float y_scale, float w_scale,
+    float h_scale, int num_items) : text_color_(text_color), output_history_(num_items),
+        num_items_(num_items), temp_edit_idx_(0) {
+    text_boxes_ = new TextBox*[num_items_];
+    const float line_h = h_scale / static_cast<float>(num_items_);
+    for (int i = 0; i < num_items_; ++i) {
+        float line_y = y_scale + h_scale - static_cast<float>(i) * line_h;
+        text_boxes_[i] = TextBoxBuilder{}
+        .position(x_scale, line_y)
+        .size(w_scale, line_h)
+        .backgroundColor(background_color)
+        .text("")
+        .textColor(text_color)
+        .alignX(TextAlignment::Left)
+        .build();
+    }
+    resetTempEdits();
+}
+
+void Terminal::addLine(std::string text) {
+    output_history_.push_front(text);
+    for (int i = 0; i < output_history_.size(); i++) {
+        getLine(i)->setText(output_history_.at(i));
+    }
+}
+
+TextBox *Terminal::getLine(int index) {
+    return text_boxes_[index];
+}
+
+void Terminal::updateCache(const UIRenderContext& c) {
+    for (int i = 0; i < num_items_; i++) {
+        getLine(i)->updateCache(c);
+    }
+}
+
+void Terminal::resetTempEdits() {
+    temp_edits_ = input_history_;
+    temp_edits_.push_back("");
+    temp_edit_idx_ = temp_edits_.size() - 1;
+}
+
+void Terminal::appendInputHistory(std::string text) {
+    input_history_.push_back(text);
+    resetTempEdits();
+}
+
+void Terminal::pushToCurrentTempEdit(std::string text) {
+    temp_edits_[temp_edit_idx_] += text;
+}
+
+void Terminal::popFromCurrentTempEdit() {
+    temp_edits_[temp_edit_idx_].pop_back();
+}
+
+std::string Terminal::getPrevTempEdit() {
+    if (temp_edit_idx_ != 0) {
+        temp_edit_idx_--;
+        return temp_edits_[temp_edit_idx_];
+    }
+    return temp_edits_[0];
+}
+
+std::string Terminal::getNextTempEdit() {
+    if (temp_edit_idx_ != temp_edits_.size() - 1) {
+        temp_edit_idx_++;
+        return temp_edits_[temp_edit_idx_];
+    }
+    return temp_edits_[temp_edit_idx_];
+}
+
 TerminalInput::TerminalInput(float x_scale, float y_scale, float w_scale, float h_scale, SDL_Color background_color,
     std::string text, SDL_Color text_color, int font_size, TextAlignment text_align_x, Terminal *terminal) :
     TextBox(x_scale, y_scale, w_scale, h_scale, background_color, text, text_color, font_size, text_align_x),
@@ -362,12 +391,16 @@ TerminalInput::TerminalInput(float x_scale, float y_scale, float w_scale, float 
 void TerminalInput::addChars(const char *text) {
     typing_timestamp_ = SDL_GetTicks();
     input_text_ += std::string(text);
+    terminal_->pushToCurrentTempEdit(text);
     text_ = static_text_ + input_text_;
 }
 
 void TerminalInput::handleBackspace() {
     typing_timestamp_ = SDL_GetTicks();
-    if (!input_text_.empty()) input_text_.pop_back();
+    if (!input_text_.empty()) {
+        input_text_.pop_back();
+        terminal_->popFromCurrentTempEdit();
+    }
     text_ = static_text_ + input_text_;
 }
 
@@ -375,10 +408,21 @@ void TerminalInput::parseCommand() {
     if (input_text_.empty()) return;
     std::string output = commandParser(app_state_, input_text_);
     if (!output.empty()) {
+        terminal_->appendInputHistory(input_text_);
         input_text_ = std::string();
-        text_ = static_text_ + input_text_;
+        text_ = static_text_;
         terminal_->addLine(output);
     }
+}
+
+void TerminalInput::showPrevInput() {
+    input_text_ = terminal_->getPrevTempEdit();
+    text_ = static_text_ + input_text_;
+}
+
+void TerminalInput::showNextInput() {
+    input_text_ = terminal_->getNextTempEdit();
+    text_ = static_text_ + input_text_;
 }
 
 void TerminalInput::draw(const UIRenderContext& c) {
