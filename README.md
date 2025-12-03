@@ -1,7 +1,7 @@
 # Memsweeper
 
 Dependencies: 
-- SDL3, SDL_TTF (in repository)
+- SDL3, SDL_TTF (project-level git submodules)
 - [Boost 1.89.0 (must be unzipped and placed in "external" directory)](https://drive.google.com/drive/folders/18PQ5TOt0py-vJg31gwdYBPPUci7fWbKP?usp=sharing)
 
 Credits:
