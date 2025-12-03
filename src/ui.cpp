@@ -3,10 +3,13 @@
 //
 
 #include "ui.hpp"
-#include "murphy_util.hpp"
+#include "util.hpp"
+#include "AppState.hpp"
+#include "Board.hpp"
+#include "game_logic.hpp"
 
 UIElement::UIElement(float x_scale, float y_scale, float w_scale, float h_scale, SDL_Color background_color) : x_scale_(x_scale),
-    y_scale_(y_scale), w_scale_(w_scale), h_scale_(h_scale), background_color_(background_color) {}
+                                                                                                               y_scale_(y_scale), w_scale_(w_scale), h_scale_(h_scale), background_color_(background_color) {}
 
 void UIElement::computeBounds(int win_w, int win_h) {
     rect_ = {x_scale_ * static_cast<float>(win_w), y_scale_ * static_cast<float>(win_h), w_scale_ * static_cast<float>(win_w),
@@ -42,7 +45,6 @@ TextBox::~TextBox() {
 }
 
 void TextBox::draw(const UIRenderContext& c) {
-    if (!visible_) return;
     if (text_ != prev_text_) updateCache(c);
     SDL_SetRenderDrawColor(c.renderer, background_color_.r, background_color_.g, background_color_.b,
         background_color_.a);
@@ -161,7 +163,6 @@ ButtonState Button::getState() {
 }
 
 void Button::draw(const UIRenderContext& c) {
-    if (!visible_) return;
     SDL_Color color;
     switch (state_) {
         case ButtonState::Idle:
@@ -426,7 +427,6 @@ void TerminalInput::showNextInput() {
 }
 
 void TerminalInput::draw(const UIRenderContext& c) {
-    if (!visible_) return;
     if (text_ != prev_text_) updateCache(c);
     if (SDL_GetTicks() - typing_timestamp_ > BLINK_DURATION_MS) {
         typing_state_ = false;
@@ -535,5 +535,333 @@ TerminalInput* TerminalInputBuilder::build() {
     return input;
 }
 
+void spOnClick(AppState *state) {
+    state->current_scene = SceneID::Singleplayer;
+    UIRenderContext ctx = UIRenderContext(state->renderer, state->ui_font, state->rdpi_scale);
+    state->scenes[SceneID::Singleplayer]->init(ctx, state);
+    SDL_StartTextInput(state->window);
+}
 
+MainMenuScene::MainMenuScene(AppState *state) {
+    TextBox *title = TextBoxBuilder()
+    .position(0, 0.2)
+    .size(1, 0.2)
+    .backgroundColor({0, 0, 0, 255})
+    .text("Memsweeper")
+    .textColor({255, 255, 255, 255})
+    .build();
+    elements_.push_back(title);
 
+    Button *sp_button = ButtonBuilder()
+        .position(0, 0.5)
+        .size(1, 0.1)
+        .backgroundColor({100, 0, 0, 255})
+        .text("Singleplayer")
+        .textColor({255, 255, 255, 255})
+        .hoverColor({200, 200, 100, 255})
+        .onClick(spOnClick)
+        .build();
+    elements_.push_back(sp_button);
+}
+
+MainMenuScene::~MainMenuScene() {
+    for (UIElement *el : elements_) {
+        delete el;
+    }
+}
+
+void MainMenuScene::init(UIRenderContext &c, AppState *state) {
+    UIRenderContext ctx = UIRenderContext(state->renderer, state->ui_font, state->rdpi_scale);
+    int drawable_w, drawable_h;
+    SDL_GetRenderOutputSize(state->renderer, &drawable_w, &drawable_h);
+    for (UIElement *el : elements_) {
+        el->computeBounds(drawable_w, drawable_h);
+        el->updateCache(ctx);
+    }
+}
+
+void MainMenuScene::draw(UIRenderContext &c, AppState *state) {
+    for (UIElement *el : elements_) {
+        if (el->isVisible()) el->draw(c);
+        if (Button* btn = dynamic_cast<Button*>(el)) {
+            btn->updateEffect(state->mouse_x, state->mouse_y);
+        }
+    }
+}
+
+void MainMenuScene::handleEvent(const SDL_Event *event, AppState *state) {
+    switch (event->type) {
+        case SDL_EVENT_MOUSE_MOTION: {
+            for (UIElement *el : elements_) {
+                if (!el->isVisible()) continue;
+                el->onMouseMotion(state->mouse_x, state->mouse_y);
+            }
+            break;
+        }
+        case SDL_EVENT_WINDOW_RESIZED:
+        case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED: {
+            int drawable_w, drawable_h;
+            SDL_GetRenderOutputSize(state->renderer, &drawable_w, &drawable_h);
+            UIRenderContext ctx = UIRenderContext(state->renderer, state->ui_font, state->rdpi_scale);
+            for (UIElement *el : elements_) {
+                el->computeBounds(drawable_w, drawable_h);
+                el->updateCache(ctx);
+            }
+            break;
+        }
+        case SDL_EVENT_MOUSE_BUTTON_DOWN: {
+            for (UIElement *el : elements_) {
+                if (!el->isVisible()) continue;
+                el->onMouseDown(state->mouse_x, state->mouse_y, state);
+            }
+            break;
+        }
+        case SDL_EVENT_MOUSE_BUTTON_UP: {
+            for (UIElement *el : elements_) {
+                if (!el->isVisible()) continue;
+                el->onMouseUp(state->mouse_x, state->mouse_y, state);
+            }
+            break;
+        }
+        default:
+            break;
+    }
+}
+
+SingleplayerScene::SingleplayerScene(AppState *state) {
+    TextBox *board_bkg = TextBoxBuilder()
+        .position(.06, .1)
+        .size(.48, .8)
+        .backgroundColor({255, 255, 255, 255})
+        .textColor({255, 255, 255, 255})
+        .text("b")
+        .build();
+    //Adds board_bkg, a white box that is behind the actual squares.
+    elements_.push_back(board_bkg); // number 0
+    for (int i = 0; i < 16; i++) {
+        for (int j = 0; j < 16; j++) {
+            TextBox *square = TextBoxBuilder()
+                .position(0.06 + 0.03*j, 0.1 + 0.05 * i)
+                .size(0.03, 0.05)
+                .fontSize(35)
+                .backgroundColor({0, 0, 255, 255})
+                .text("?")
+                .textColor({0, 0, 0, 255})
+                .build();
+            elements_.push_back(square); // numbers 1-256
+        }
+    } //Adds a 16x16 grid of squares
+    for (int i = 0; i < 16; i++) {
+        TextBox *square = TextBoxBuilder()
+            .position(0.03, 0.85 - 0.05*i)
+            .size(0.03, 0.05)
+            .backgroundColor({0, 0, 0, 255})
+            .text(std::string() + toHexDigit(i))
+            .textColor({255, 255, 255, 255})
+            .fontSize(40)
+            .build();
+        elements_.push_back(square); // numbers 257-272
+    } // Labels vertical
+    for (int i = 0; i < 16; i++) {
+        TextBox *square = TextBoxBuilder()
+            .position(0.06 + 0.03*i, 0.9)
+            .size(0.03, 0.05)
+            .backgroundColor({0, 0, 0, 255})
+            .text(std::string() + toHexDigit(i))
+            .textColor({255, 255, 255, 255})
+            .fontSize(40)
+            .build();
+        elements_.push_back(square); // numbers 273-288
+    } // Labels horizontal
+    TextBox *terminal_label = TextBoxBuilder()
+        .position(.6, .1)
+        .size(.35, .05)
+        .backgroundColor({0, 0, 0, 255})
+        .text("* Terminal *")
+        .textColor({255, 255, 255, 255})
+        .build();
+    elements_.push_back(terminal_label); // number 289
+
+    int numItems = 12;
+    Terminal *terminal = new Terminal({255, 255, 255, 0}, {0, 0, 0, 0},
+        .6, .13, .35, .4, numItems);
+    terminal_ = terminal;
+    for (int i = 0; i < numItems; i++) {
+        terminal->addLine("-------------------------");
+        elements_.push_back(terminal->getLine(i)); // numbers 290-301
+    }
+
+    TerminalInput *input_box = TerminalInputBuilder()
+        .position(0.6, 0.6)
+        .size(.35, .05)
+        .backgroundColor({0, 0, 0, 255})
+        .staticText("player$ ")
+        .textColor({255, 255, 255, 255})
+        .terminal(terminal)
+        .build();
+    input_box->commandParser = [this](AppState* state, std::string cmd) {
+        return this->onCommandEntered(state, std::move(cmd));
+    };
+    input_box->setAppState(state);
+    elements_.push_back(input_box); // number 302
+    terminal_input_ = input_box;
+
+    TextBox *score = TextBoxBuilder()
+        .position(0.19, 0.02)
+        .size(0.03, 0.05)
+        .backgroundColor({0, 0, 0, 255})
+        .text("squares explored: " + std::to_string(state->board->getNumRevealed()) + "/256")
+        .textColor({255, 255, 255, 255})
+        .fontSize(35)
+        .build();
+    elements_.push_back(score); // number 303
+    score_counter_ = score;
+
+    TextBox *moves = TextBoxBuilder()
+        .position(0.6, 0.02)
+        .size(0.03, 0.05)
+        .backgroundColor({0, 0, 0, 255})
+        .text("moves left: " + std::to_string(state->board->getPlayer().getMoves()))
+        .textColor({255, 255, 255, 255})
+        .fontSize(35)
+        .build();
+    elements_.push_back(moves); // number 304
+    move_counter_ = moves;
+
+    revealCellLogic(state,0); //why doesn't this increment revealed by 1
+    revealCellUI(state, 0);
+    std::string out = "0x";
+    out.push_back(toHexDigit(0/16));
+    out.push_back(toHexDigit(0%16));
+    terminal->addLine(out + " data: " + state->board->getGrid()[0].getData());
+
+    TextBox* element = dynamic_cast<TextBox*>(elements_[241]);
+    element->setText(":)");
+
+}
+
+SingleplayerScene::~SingleplayerScene() {
+    for (UIElement *el : elements_) {
+        delete el;
+    }
+}
+
+void SingleplayerScene::init(UIRenderContext &c, AppState *state) {
+    UIRenderContext ctx = UIRenderContext(state->renderer, state->ui_font, state->rdpi_scale);
+    int drawable_w, drawable_h;
+    SDL_GetRenderOutputSize(state->renderer, &drawable_w, &drawable_h);
+    for (UIElement *el : elements_) {
+        el->computeBounds(drawable_w, drawable_h);
+        el->updateCache(ctx);
+    }
+}
+
+void SingleplayerScene::draw(UIRenderContext &c, AppState *state) {
+    for (UIElement *el : elements_) {
+        if (el->isVisible()) el->draw(c);
+        if (Button* btn = dynamic_cast<Button*>(el)) {
+            btn->updateEffect(state->mouse_x, state->mouse_y);
+        }
+    }
+}
+
+void SingleplayerScene::handleEvent(const SDL_Event *event, AppState *state) {
+    switch (event->type) {
+        case SDL_EVENT_MOUSE_MOTION: {
+            for (UIElement *el : elements_) {
+                if (!el->isVisible()) continue;
+                el->onMouseMotion(state->mouse_x, state->mouse_y);
+            }
+            break;
+        }
+        case SDL_EVENT_WINDOW_RESIZED:
+        case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED: {
+            int drawable_w, drawable_h;
+            SDL_GetRenderOutputSize(state->renderer, &drawable_w, &drawable_h);
+            UIRenderContext ctx = UIRenderContext(state->renderer, state->ui_font, state->rdpi_scale);
+            for (UIElement *el : elements_) {
+                el->computeBounds(drawable_w, drawable_h);
+                el->updateCache(ctx);
+            }
+            break;
+        }
+        case SDL_EVENT_MOUSE_BUTTON_DOWN: {
+            for (UIElement *el : elements_) {
+                if (!el->isVisible()) continue;
+                el->onMouseDown(state->mouse_x, state->mouse_y, state);
+            }
+            break;
+        }
+        case SDL_EVENT_MOUSE_BUTTON_UP: {
+            for (UIElement *el : elements_) {
+                if (!el->isVisible()) continue;
+                el->onMouseUp(state->mouse_x, state->mouse_y, state);
+            }
+            break;
+        }
+        case SDL_EVENT_TEXT_INPUT: {
+            terminal_input_->addChars(event->text.text);
+            break;
+        }
+        case SDL_EVENT_KEY_DOWN: {
+            if (event->key.key == SDLK_BACKSPACE) {
+                terminal_input_->handleBackspace();
+            }
+            else if (event->key.key == SDLK_RETURN) {
+                terminal_input_->parseCommand();
+            } else if (event->key.key == SDLK_UP) {
+                terminal_input_->showPrevInput();
+            } else if (event->key.key == SDLK_DOWN) {
+                terminal_input_->showNextInput();
+            }
+            break;
+        }
+        default:
+            break;
+    }
+}
+
+void SingleplayerScene::revealCellUI(AppState *state, int index) {
+    elements_[(std::ceil((256.0-index)/16)*16-(15-index%16))]->setColor({0,255,0,0});
+    dynamic_cast<TextBox*>(elements_[(std::ceil((256.0-index)/16)*16-(15-index%16))])->setText(state->board->getGrid()[index].getType());
+    score_counter_->setText("squares explored: " + std::to_string(state->board->getNumRevealed()) + "/256");
+}
+
+void SingleplayerScene::movePlayerUI(AppState *state, int index, int old) {
+    move_counter_->setText("moves left: " + std::to_string(state->board->getPlayer().getMoves()));
+    UIElement *cell = elements_[(std::ceil((256.0-old)/16)*16-(15-old%16))];
+    if (TextBox* element = dynamic_cast<TextBox*>(cell)) {
+        element->setText(state->board->getGrid()[old].getType());
+    }
+    cell = elements_[(std::ceil((256.0-index)/16)*16-(15-index%16))];
+    if (TextBox* element = dynamic_cast<TextBox*>(cell)) {
+        element->setText(":)");
+    }
+}
+
+void SingleplayerScene::idStructureUI(AppState *state, bool success, int loc, std::vector<Cell*> siblings) {
+    if (success) {
+        UIElement *cell = elements_[(std::ceil((256.0-loc)/16)*16-(15-loc%16))];
+        for (Cell* sibling : siblings) {
+            if (!sibling->getRevealed()) revealCellUI(state, sibling->getLoc());
+        }
+        if (TextBox* element = dynamic_cast<TextBox*>(cell)) {
+            element->setText(":)");
+        }
+    }
+    move_counter_->setText("moves left: " + std::to_string(state->board->getPlayer().getMoves()));
+}
+
+std::string SingleplayerScene::onCommandEntered(AppState *state, std::string cmd) {
+    CommandResult res = parseCommandLogic(state, cmd);
+    if (res.didId) {
+        idStructureUI(state, res.idSuccess, res.idLoc, res.idSiblings);
+    }
+    if (res.didReveal) {
+        revealCellUI(state, res.revealIndex);
+    }
+    if (res.didMove) {
+        movePlayerUI(state, res.newLoc, res.oldLoc);
+    }
+    return res.message;
+}

@@ -1,10 +1,20 @@
 add_executable(CISC220Final main.cpp
         Player.cpp
+        ../include/Player.hpp
         Structure.cpp
+        ../include/Structure.hpp
         Cell.cpp
+        ../include/Cell.hpp
         ui.cpp
-        murphy_util.cpp
-        Board.cpp)
+        ../include/ui.hpp
+        util.cpp
+        ../include/util.hpp
+        Board.cpp
+        ../include/Board.hpp
+        ../include/AppState.hpp
+        game_logic.cpp
+        game_logic.hpp
+)
 target_include_directories(CISC220Final PRIVATE ../include
         ../external/boost_1_89_0
 )

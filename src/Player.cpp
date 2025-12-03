@@ -24,6 +24,7 @@ int Player::movePlayer(int loc) {
         moves--;
         return 0;
     }
+    return -1;
 }
 
 

@@ -1,35 +1,14 @@
 #include "SDL3/SDL.h"
 
 #define SDL_MAIN_USE_CALLBACKS
+
 #include <iostream>
-#include <cmath>
-#include <vector>
 #include <string>
-#include <algorithm>
-#include <cctype>
 
 #include "Board.hpp"
-#include "murphy_util.hpp"
 #include "ui.hpp"
-#include "Cell.hpp"
 #include "SDL3/SDL_main.h"
-
-std::string movePlayer(AppState *state, int index);
-std::string revealCell(AppState *state, int index);
-std::string idStructure(AppState *state, std::string guess);
-
-
-//sorry guys there should probbaly be a better place for this I just didn't know where
-std::string convertToLower(std::string original) {
-    // Convert the string to lowercase
-    std::transform(original.begin(), original.end(), original.begin(),
-                   [](unsigned char c){ return std::tolower(c); });
-    return original;
-}
-std::string removeSpaces(std::string original) {
-    original.erase(std::remove_if(original.begin(), original.end(), ::isspace), original.end());
-    return original;
-}
+#include "AppState.hpp"
 
 std::string getAssetPath(const std::string &relative) {
     const char *base = SDL_GetBasePath();
@@ -43,148 +22,6 @@ std::string getAssetPath(const std::string &relative) {
 
     path += "assets/" + relative;
     return path;
-}
-enum class UIState { MainMenu, Singleplayer };
-struct AppState {
-    SDL_Window *window = nullptr;
-    SDL_Renderer *renderer = nullptr;
-    std::vector<UIElement*> main_menu_els;
-    std::vector<UIElement*> sp_menu_els;
-    std::vector<UIElement*> *active_els = &main_menu_els;
-    TerminalInput *terminal_input;
-    Terminal *terminal;
-    TTF_Font *ui_font = nullptr;
-    float dpi_scale_x = 1.0f;
-    float dpi_scale_y = 1.0f;
-    float rdpi_scale = UI_REF_SCALE;
-    int mouse_x = 0;
-    int mouse_y = 0;
-    UIState ui_state = UIState::MainMenu;
-    Board *board;
-};
-
-void spOnClick(AppState *state) {
-    state->active_els = &state->sp_menu_els;
-    UIRenderContext ctx = UIRenderContext(state->renderer, state->ui_font, state->rdpi_scale);
-    for (UIElement *el : *state->active_els) {
-        int drawableW, drawableH;
-        SDL_GetRenderOutputSize(state->renderer, &drawableW, &drawableH);
-        el->computeBounds(drawableW, drawableH);
-        el->updateCache(ctx);
-    }
-    SDL_StartTextInput(state->window);
-}
-
-std::string parseCommand(AppState* state, std::string command) {
-    command=convertToLower(command);
-    command=removeSpaces(command);
-    std::cout<< command << std::endl;
-    if (command=="quit"|| command=="q") exit(0);
-    if (command.length() < 3) {
-        return "invalid input";
-    } else {
-        if (command.substr(0,3) == "loc") {
-            if (!(command.length() == 5 || command.length()==8)) return "invalid loc";
-            if (command.substr(3,2) == "++") {
-                return movePlayer(state, state->board->getPlayer().getLocation()+1); // not sure how we are getting current other than from state
-            }
-            else if (command.substr(3,2) == "--") {
-                return movePlayer(state, state->board->getPlayer().getLocation()-1); // not sure how we are getting current other than from state
-            } else if (command.substr(3,3)=="=0x") {
-                // DOES NOT HANDLE an invalid HEX input
-                return movePlayer(state,std::stoi(command.substr(6),nullptr,16));
-            }else {
-                return "invalid loc";
-            }
-        } else if (command.substr(0,2) == "id") {
-            std::string guess =command.substr(2);
-            if (guess != "heap" && guess!="matrix" && guess!="graph" && guess!="bst" && guess!="dll") return "invalid id";
-            return idStructure(state, guess); // <- handles comparing
-            //returns a string that will either say successful and reveal or failure
-            // return "id";
-        } else {
-            return "invalid input";
-        }
-    }
-    return "Successfully did thing";
-}
-
-std::string revealCell(AppState *state, int index) {
-    if (state->board->getGrid()[index].getRevealed()) {
-        std::string y = "0x";
-        y.push_back(toHexDigit(index/16));
-        y.push_back(toHexDigit(index%16));
-
-        return y = y +" data: " + state->board->getGrid()[index].getData();
-    }
-    state->board->getGrid()[index].reveal();
-    state->board->incrementNumRevealed();
-    state->sp_menu_els[(std::ceil((256.0-index)/16)*16-(15-index%16))]->setColor({0,255,0,0});
-    dynamic_cast<TextBox*>(state->sp_menu_els[(std::ceil((256.0-index)/16)*16-(15-index%16))])->setText(state->board->getGrid()[index].getType());
-    std::string y = "0x";
-    y.push_back(toHexDigit(index/16));
-    y.push_back(toHexDigit(index%16));
-    if (TextBox* element = dynamic_cast<TextBox*>(state->sp_menu_els[303])) {
-        element->setText("squares explored: " + std::to_string(state->board->getNumRevealed()) + "/256");
-    }
-
-    return y = y +" data: " + state->board->getGrid()[index].getData();
-    // return state->terminal->addLine(y);
-}
-
-std::string movePlayer(AppState *state, int index) {
-    int old = state->board->getPlayer().getLocation();
-    if (old == index) {
-        return "";
-    }
-    if (state->board->getPlayer().movePlayer(index)) {
-       return "";
-    }
-    if (TextBox* element = dynamic_cast<TextBox*>(state->sp_menu_els[304])) {
-        element->setText("moves left: " + std::to_string(state->board->getPlayer().getMoves()));
-    }
-    std::string out = "";
-    out = revealCell(state, index);
-
-    UIElement *cell = state->sp_menu_els[(std::ceil((256.0-old)/16)*16-(15-old%16))];
-    if (TextBox* element = dynamic_cast<TextBox*>(cell)) {
-        element->setText(state->board->getGrid()[old].getType());
-        // Ideally we would set this to a char representing the cell's data type, but I didn't find an easy way to do it
-    }
-    cell = state->sp_menu_els[(std::ceil((256.0-index)/16)*16-(15-index%16))];
-    if (TextBox* element = dynamic_cast<TextBox*>(cell)) {
-        element->setText(":)");
-    }
-    return out;
-}
-
-
-std::string idStructure(AppState *state, std::string guess) {
-    int loc = state->board->getPlayer().getLocation();
-
-    if (state->board->getGrid()[loc].getId()==guess) {
-        std::vector<Cell*> siblings = state->board->getGrid()[loc].getSiblings();
-        std::vector<string> out;
-        for (Cell* sibling : siblings) {
-            if (!sibling->getRevealed()) out.push_back(revealCell(state, sibling->getLoc()));
-        }
-
-    if (TextBox* element = dynamic_cast<TextBox*>(state->sp_menu_els[304])) {
-        element->setText("moves left: " + std::to_string(state->board->getPlayer().getMoves()));
-    }
-
-        UIElement *cell = state->sp_menu_els[(std::ceil((256.0-loc)/16)*16-(15-loc%16))];
-        if (TextBox* element = dynamic_cast<TextBox*>(cell)) {
-            element->setText(":)");
-        }
-        // Ideally we would set this to a char representing the cell's data type, but I didn't find an easy way to do it
-        return "identified "+guess;
-    }
-    state->board->getPlayer().setMoves(state->board->getPlayer().getMoves()-5);
-    if (TextBox* element = dynamic_cast<TextBox*>(state->sp_menu_els[304])) {
-        element->setText("moves left: " + std::to_string(state->board->getPlayer().getMoves()));
-    }
-    return "incorrect id";
 }
 
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-platform main function
@@ -243,228 +80,40 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
     }
 
     newstate->board = new Board();
-
-    TextBox *squares = TextBoxBuilder()
-        .position(.06, .1)
-        .size(.48, .8)
-        .backgroundColor({255, 255, 255, 255})
-        .textColor({255, 255, 255, 255})
-        .text("b")
-        .build();
-    //Adds squares, a white box that is behind the actual squares.
-    newstate->sp_menu_els.push_back(squares); // number 0
-    for (int i = 0; i < 16; i++) {
-        for (int j = 0; j < 16; j++) {
-            TextBox *square = TextBoxBuilder()
-                .position(0.06 + 0.03*j, 0.1 + 0.05 * i)
-                .size(0.03, 0.05)
-                .fontSize(35)
-                .backgroundColor({0, 0, 255, 255})
-                .text("?")
-                .textColor({0, 0, 0, 255})
-                .build();
-            //Adds a 16x16 grid of squares
-            newstate->sp_menu_els.push_back(square); // numbers 1-256
-        }
-    }
-    // Labels
-    for (int i = 0; i < 16; i++) {
-        TextBox *square = TextBoxBuilder()
-            .position(0.03, 0.85 - 0.05*i)
-            .size(0.03, 0.05)
-            .backgroundColor({0, 0, 0, 255})
-            .text(std::string() + toHexDigit(i))
-            .textColor({255, 255, 255, 255})
-            .fontSize(40)
-            .build();
-        newstate->sp_menu_els.push_back(square); // numbers 257-272
-    }
-    for (int i = 0; i < 16; i++) {
-        TextBox *square = TextBoxBuilder()
-            .position(0.06 + 0.03*i, 0.9)
-            .size(0.03, 0.05)
-            .backgroundColor({0, 0, 0, 255})
-            .text(std::string() + toHexDigit(i))
-            .textColor({255, 255, 255, 255})
-            .fontSize(40)
-            .build();
-        newstate->sp_menu_els.push_back(square); // numbers 273-288
-    }
-    TextBox *terminal_label = TextBoxBuilder()
-        .position(.6, .1)
-        .size(.35, .05)
-        .backgroundColor({0, 0, 0, 255})
-        .text("* Terminal *")
-        .textColor({255, 255, 255, 255})
-        .build();
-    newstate->sp_menu_els.push_back(terminal_label); // number 289
-
-    int numItems = 12;
-    Terminal *terminal = new Terminal({255, 255, 255, 0}, {0, 0, 0, 0},
-        .6, .13, .35, .4, numItems);
-    newstate->terminal = terminal;
-    for (int i = 0; i < numItems; i++) {
-        terminal->addLine("-------------------------");
-        newstate->sp_menu_els.push_back(terminal->getLine(i)); // numbers 290-301
-    }
-    TerminalInput *input_box = TerminalInputBuilder()
-        .position(0.6, 0.6)
-        .size(.35, .05)
-        .backgroundColor({0, 0, 0, 255})
-        .staticText("player$ ")
-        .textColor({255, 255, 255, 255})
-        .terminal(terminal)
-        .build();
-    input_box->commandParser = parseCommand;
-    input_box->setAppState(newstate);  // Add this line!
-    newstate->sp_menu_els.push_back(input_box); // number 302
-    newstate->terminal_input = input_box;
-
-    TextBox *score = TextBoxBuilder()
-            .position(0.19, 0.02)
-            .size(0.03, 0.05)
-            .backgroundColor({0, 0, 0, 255})
-            .text("squares explored: " + std::to_string(newstate->board->getNumRevealed()) + "/256")
-            .textColor({255, 255, 255, 255})
-            .fontSize(35)
-            .build();
-    newstate->sp_menu_els.push_back(score); // number 303
-
-    TextBox *moves = TextBoxBuilder()
-            .position(0.6, 0.02)
-            .size(0.03, 0.05)
-            .backgroundColor({0, 0, 0, 255})
-            .text("moves left: " + std::to_string(newstate->board->getPlayer().getMoves()))
-            .textColor({255, 255, 255, 255})
-            .fontSize(35)
-            .build();
-    newstate->sp_menu_els.push_back(moves); // number 304
-
-    TextBox *title = TextBoxBuilder()
-        .position(0, 0.2)
-        .size(1, 0.2)
-        .backgroundColor({0, 0, 0, 255})
-        .text("Memsweeper")
-        .textColor({255, 255, 255, 255})
-        .build();
-    newstate->main_menu_els.push_back(title);
-
-    Button *sp_button = ButtonBuilder()
-        .position(0, 0.5)
-        .size(1, 0.1)
-        .backgroundColor({100, 0, 0, 255})
-        .text("Singleplayer")
-        .textColor({255, 255, 255, 255})
-        .hoverColor({200, 200, 100, 255})
-        .onClick(spOnClick)
-        .build();
-    newstate->main_menu_els.push_back(sp_button);
-
-    revealCell(newstate,0);//why doesn't this increment revealed by 1
-    std::string out = "0x";
-    out.push_back(toHexDigit(0/16));
-    out.push_back(toHexDigit(0%16));
-    terminal->addLine(out +" data: " + newstate->board->getGrid()[0].getData());
-
-    if (TextBox* element = dynamic_cast<TextBox*>(newstate->sp_menu_els[241])) {
-        element->setText(":)");
-    }
-    UIRenderContext ctx = UIRenderContext(newstate->renderer, newstate->ui_font, newstate->rdpi_scale);
-    for (UIElement *el : newstate->main_menu_els) {
-        el->computeBounds(drawable_w, drawable_h);
-        el->updateCache(ctx);
-    }
-    for (UIElement *el : newstate->sp_menu_els) {
-        el->computeBounds(drawable_w, drawable_h);
-        el->updateCache(ctx);
-    }
+    newstate->scenes[SceneID::MainMenu] = new MainMenuScene(newstate);
+    newstate->scenes[SceneID::Singleplayer] = new SingleplayerScene(newstate);
 
     return SDL_APP_CONTINUE;
 }
 
 SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) { // General event handling function
     AppState *state = static_cast<AppState*>(appstate);
-    UIRenderContext ctx = UIRenderContext(state->renderer, state->ui_font, state->rdpi_scale);
-    const float x_win = event->motion.x;
-    const float y_win = event->motion.y;
-    const int x = static_cast<int>(x_win * state->dpi_scale_x);
-    const int y = static_cast<int>(y_win * state->dpi_scale_y);
-    state->mouse_x = x;
-    state->mouse_y = y;
     switch (event->type) {
         case SDL_EVENT_QUIT:
             return SDL_APP_SUCCESS;
-        case SDL_EVENT_WINDOW_RESIZED:
-        case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED: {
-            int drawable_w, drawable_h;
-            SDL_GetRenderOutputSize(state->renderer, &drawable_w, &drawable_h);
-
-            for (UIElement *el : *state->active_els) {
-                el->computeBounds(drawable_w, drawable_h);
-                el->updateCache(ctx);
-            }
-            break;
-        }
         case SDL_EVENT_MOUSE_MOTION: {
-            for (UIElement *el : *state->active_els) {
-                if (!el->isVisible()) continue;
-                el->onMouseMotion(x, y);
-            }
-            break;
-        }
-        case SDL_EVENT_MOUSE_BUTTON_DOWN: {
-            for (UIElement *el : *state->active_els) {
-                if (!el->isVisible()) continue;
-                el->onMouseDown(x, y, state);
-            }
-            break;
-        }
-        case SDL_EVENT_MOUSE_BUTTON_UP: {
-            for (UIElement *el : *state->active_els) {
-                if (!el->isVisible()) continue;
-                el->onMouseUp(x, y, state);
-            }
-            break;
-        }
-        case SDL_EVENT_TEXT_INPUT: {
-            state->terminal_input->addChars(event->text.text);
-            break;
-        }
-        case SDL_EVENT_KEY_DOWN: {
-            if (state->active_els == &state->sp_menu_els) {
-                if (event->key.key == SDLK_BACKSPACE) {
-                    state->terminal_input->handleBackspace();
-                }
-                else if (event->key.key == SDLK_RETURN) {
-                    state->terminal_input->parseCommand();
-                } else if (event->key.key == SDLK_UP) {
-                    state->terminal_input->showPrevInput();
-                } else if (event->key.key == SDLK_DOWN) {
-                    state->terminal_input->showNextInput();
-                }
-            }
+            const float x_win = event->motion.x;
+            const float y_win = event->motion.y;
+            const int x = static_cast<int>(x_win * state->dpi_scale_x);
+            const int y = static_cast<int>(y_win * state->dpi_scale_y);
+            state->mouse_x = x;
+            state->mouse_y = y;
             break;
         }
         default:
             break;
     }
+    state->scenes[state->current_scene]->handleEvent(event, state);
     return SDL_APP_CONTINUE;
 }
 
 SDL_AppResult SDL_AppIterate(void *appstate) { // Runs once every main loop
     AppState *state = static_cast<AppState*>(appstate);
-    UIRenderContext ctx = UIRenderContext(state->renderer, state->ui_font, state->rdpi_scale);
+    if (state->quit_next_frame) return SDL_APP_SUCCESS;
     SDL_SetRenderDrawColor(state->renderer, 0, 0, 0, 255);
     SDL_RenderClear(state->renderer); // Clears backbuffer, set all pixels to draw color
-
-    for (UIElement* el : *state->active_els) {
-        el->draw(ctx);
-        if (Button* btn = dynamic_cast<Button*>(el)) {
-            // el is actually a Button, so we can do its animation effect
-            btn->updateEffect(state->mouse_x, state->mouse_y);
-        }
-    }
-
+    UIRenderContext ctx = UIRenderContext(state->renderer, state->ui_font, state->rdpi_scale);
+    state->scenes[state->current_scene]->draw(ctx, state);
     SDL_RenderPresent(state->renderer); // Displays the buffer we're drawing to on screen
     return SDL_APP_CONTINUE;
 }
@@ -472,12 +121,8 @@ SDL_AppResult SDL_AppIterate(void *appstate) { // Runs once every main loop
 void SDL_AppQuit(void *appstate, SDL_AppResult result) {
     AppState *state = static_cast<AppState*>(appstate);
     if (state) {
-        delete state->terminal;
-        for (UIElement* elem : state->sp_menu_els) {
-            delete elem;
-        }
-        for (UIElement* elem : state->main_menu_els) {
-            delete elem;
+        for (pair<const SceneID, UIScene*> &pair : state->scenes) {
+            delete pair.second;
         }
         if (state->ui_font) TTF_CloseFont(state->ui_font);
         if (state->renderer) SDL_DestroyRenderer(state->renderer);

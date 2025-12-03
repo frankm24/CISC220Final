@@ -8,6 +8,7 @@
 #include <string>
 #include <boost/circular_buffer.hpp>
 
+#include "Cell.hpp"
 #include "../external/SDL3_ttf/include/SDL3_ttf/SDL_ttf.h"
 #include "SDL3/SDL_pixels.h"
 
@@ -221,6 +222,45 @@ public:
    TerminalInputBuilder& commandParser(TerminalInput::Callback cb);
 
    TerminalInput* build();
+};
+
+enum class SceneID { MainMenu, Singleplayer };
+
+class UIScene {
+public:
+   virtual ~UIScene() = default;
+   virtual void init(UIRenderContext &c, AppState *state) = 0;
+   virtual void draw(UIRenderContext &c, AppState *state) = 0;
+   virtual void handleEvent(const SDL_Event *event, AppState *state) = 0;
+};
+
+class MainMenuScene : public UIScene {
+   std::vector<UIElement*> elements_;
+public:
+   explicit MainMenuScene(AppState *state);
+   ~MainMenuScene();
+   void init(UIRenderContext &c, AppState *state) override;
+   void draw(UIRenderContext &c, AppState *state) override;
+   void handleEvent(const SDL_Event *event, AppState *state) override;
+};
+
+class SingleplayerScene: public UIScene {
+   std::vector<UIElement*> elements_;
+   TerminalInput *terminal_input_;
+   Terminal *terminal_;
+   TextBox *score_counter_;
+   TextBox *move_counter_;
+public:
+   explicit SingleplayerScene(AppState *state);
+   ~SingleplayerScene();
+   void init(UIRenderContext &c, AppState *state) override;
+   void draw(UIRenderContext &c, AppState *state) override;
+   void handleEvent(const SDL_Event *event, AppState *state) override;
+private:
+   void revealCellUI(AppState *state, int index);
+   void movePlayerUI(AppState *state, int index, int old);
+   void idStructureUI(AppState *state, bool success, int loc, std::vector<Cell*> siblings);
+   std::string onCommandEntered(AppState *state, std::string cmd);
 };
 
 

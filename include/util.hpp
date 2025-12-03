@@ -5,6 +5,8 @@
 #ifndef CISC220FINAL_MURPHY_UTIL_HPP
 #define CISC220FINAL_MURPHY_UTIL_HPP
 
+#include <string>
+
 #include "SDL3/SDL_pixels.h"
 
 // Clamp integer to [0, 255] and return as Uint8
@@ -18,5 +20,9 @@ SDL_Color adjustBrightness(SDL_Color c, float factor);
 
 // Return a character representing the hex digit of an integer from [0, 15]. Returns ? for an invalid int.
 char toHexDigit(int n);
+
+std::string convertToLower(std::string original);
+
+std::string removeSpaces(std::string original);
 
 #endif //CISC220FINAL_MURPHY_UTIL_HPP
