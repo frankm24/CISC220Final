@@ -13,6 +13,14 @@
 
 struct AppState;
 
+constexpr float UI_REF_SCALE = 2.0f; // DO NOT CHANGE
+
+struct UIRenderContext {
+   SDL_Renderer *renderer;
+   TTF_Font *font;
+   float dpi_scale;
+};
+
 enum class TextAlignment { Left, Center };
 
 class UIElement {
@@ -30,8 +38,8 @@ public:
    bool isVisible() const;
    void setColor(SDL_Color color);
 
-   virtual void draw(SDL_Renderer *renderer, TTF_Font *font) = 0;
-   virtual void updateCache(SDL_Renderer *renderer, TTF_Font *font) = 0;
+   virtual void draw(const UIRenderContext& c) = 0;
+   virtual void updateCache(const UIRenderContext& c) = 0;
    virtual void onMouseMotion(int x, int y) {}
    virtual void onMouseDown(int x, int y, AppState *state) {}
    virtual void onMouseUp(int x, int y, AppState *state) {}
@@ -52,8 +60,8 @@ protected:
 public:
    ~TextBox() override;
 
-   void draw(SDL_Renderer *renderer, TTF_Font *font) override;
-   void updateCache(SDL_Renderer *renderer, TTF_Font *font) override;
+   void draw(const UIRenderContext& c) override;
+   void updateCache(const UIRenderContext& c) override;
    std::string getText() const;
    void setText(std::string text);
 };
@@ -82,21 +90,6 @@ public:
    TextBox* build();
 };
 
-class Terminal {
-protected:
-   SDL_Color text_color_;
-   int num_items_;
-   TextBox** text_boxes_;
-   boost::circular_buffer<std::string> command_history_;
-public:
-   Terminal(SDL_Color text_color, SDL_Color background_color, float x_scale, float y_scale, float w_scale,
-    float h_scale, int num_items);
-   // ~Terminal();
-   void addLine(std::string text);
-   TextBox *getLine(int index);
-   void updateCache(SDL_Renderer *renderer, TTF_Font *font);
-};
-
 enum class ButtonState { Idle, Hovered, Down, Clicked };
 
 class Button : public TextBox {
@@ -114,7 +107,7 @@ protected:
    Callback onClick = nullptr, Callback onPressImmediate = nullptr);
 public:
    static constexpr Uint64 CLICK_EFFECT_DURATION_MS = 120;
-   void draw(SDL_Renderer *renderer, TTF_Font *font) override;
+   void draw(const UIRenderContext& c) override;
    void onMouseMotion(int x, int y) override;
    void onMouseDown(int x, int y, AppState *state) override;
    void onMouseUp(int x, int y, AppState *state) override;
@@ -154,6 +147,30 @@ public:
    Button* build();
 };
 
+class Terminal {
+protected:
+   SDL_Color text_color_;
+   int num_items_;
+   TextBox** text_boxes_;
+   boost::circular_buffer<std::string> output_history_;
+   std::vector<std::string> input_history_;
+   std::vector<std::string> temp_edits_;
+   int temp_edit_idx_;
+public:
+   Terminal(SDL_Color text_color, SDL_Color background_color, float x_scale, float y_scale, float w_scale,
+    float h_scale, int num_items);
+   // ~Terminal();
+   void addLine(std::string text);
+   TextBox *getLine(int index);
+   void updateCache(const UIRenderContext& c);
+   void resetTempEdits();
+   void appendInputHistory(std::string text);
+   void pushToCurrentTempEdit(std::string text);
+   void popFromCurrentTempEdit();
+   std::string getPrevTempEdit();
+   std::string getNextTempEdit();
+};
+
 class TerminalInput final : public TextBox {
    using Callback = std::function<std::string(AppState*, std::string)>;
    friend class TerminalInputBuilder;
@@ -175,7 +192,9 @@ public:
    void addChars(const char *text);
    void handleBackspace();
    void parseCommand();
-   void draw(SDL_Renderer *renderer, TTF_Font *font) override;
+   void showPrevInput();
+   void showNextInput();
+   void draw(const UIRenderContext& c) override;
 };
 
 class TerminalInputBuilder {
