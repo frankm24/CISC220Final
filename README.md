@@ -1,4 +1,4 @@
-# CISC220 Final
+# Memsweeper
 
 Dependencies: 
 - SDL3, SDL_TTF (in repository)
@@ -6,3 +6,7 @@ Dependencies:
 
 Credits:
 Created by Wyatt Erwin, Frank Murphy, Maya Perry, Ben Zifcak
+
+To-do for long-term support:
+- Explore rendering text faster using a texture atlas instead of using SDL_TTF on strings
+- Multiplayer mode
