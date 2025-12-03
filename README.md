@@ -7,6 +7,8 @@ Dependencies:
 Credits:
 Created by Wyatt Erwin, Frank Murphy, Maya Perry, Ben Zifcak
 
-To-do for long-term support:
+To-do (long-term goals after due date):
 - Explore rendering text faster using a texture atlas instead of using SDL_TTF on strings
+- Scale UI elements based on physical display size
+- Rework gameplay to better meet learning outcomes
 - Multiplayer mode
