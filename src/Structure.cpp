@@ -33,6 +33,10 @@ Structure::~Structure() {
     }
 }
 
+string Structure::getId() {
+    return id;
+}
+
 // Heap class
 Heap::Heap() {
     id = "heap";

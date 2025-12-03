@@ -13,6 +13,7 @@
 
 std::string movePlayer(AppState *state, int index);
 std::string revealCell(AppState *state, int index);
+std::string idStructure(AppState *state, std::string guess);
 
 std::string getAssetPath(const std::string &relative) {
     const char *base = SDL_GetBasePath();
@@ -77,9 +78,9 @@ std::string parseCommand(AppState* state, std::string command) {
                 return "invalid loc command";
             }
         } else if (command.substr(0,2) == "id") {
-            //return idStructure(command.substr(3)) <- handles comparing
+            return idStructure(state, command.substr(3)); // <- handles comparing
             //returns a string that will either say successful and reveal or failure
-            return "id";
+            // return "id";
         } else {
             return "invalid input";
         }
@@ -91,9 +92,11 @@ std::string revealCell(AppState *state, int index) {
     state->board->getGrid()[index].reveal();
     state->board->incrementNumRevealed();
     state->sp_menu_els[(std::ceil((256.0-index)/16)*16-(15-index%16))]->setColor({0,255,0,0});
+    dynamic_cast<TextBox*>(state->sp_menu_els[(std::ceil((256.0-index)/16)*16-(15-index%16))])->setText("A");
     std::string y = "0x";
     y.push_back(toHexDigit(index/16));
     y.push_back(toHexDigit(index%16));
+
     return y = y +" data: " + state->board->getGrid()[index].getData();
     // return state->terminal->addLine(y);
 }
@@ -123,6 +126,34 @@ std::string movePlayer(AppState *state, int index) {
         element->setText(":)");
     }
     return out;
+}
+
+
+std::string idStructure(AppState *state, std::string guess) {
+    int loc = state->board->getPlayer().getLocation();
+
+    if (state->board->getGrid()[loc].getId()==guess) {
+        std::vector<Cell*> siblings = state->board->getGrid()[loc].getSiblings();
+        std::vector<string> out;
+        for (Cell* sibling : siblings) {
+            if (!sibling->getRevealed()) out.push_back(revealCell(state, sibling->getLoc()));
+        }
+
+    if (TextBox* element = dynamic_cast<TextBox*>(state->sp_menu_els[304])) {
+        element->setText("moves left: " + std::to_string(state->board->getPlayer().getMoves()));
+    }
+    if (TextBox* element = dynamic_cast<TextBox*>(state->sp_menu_els[303])) {
+        element->setText("squares explored: " + std::to_string(state->board->getNumRevealed()) + "/256");
+    }
+        UIElement *cell = state->sp_menu_els[(std::ceil((256.0-loc)/16)*16-(15-loc%16))];
+        if (TextBox* element = dynamic_cast<TextBox*>(cell)) {
+            element->setText(":)");
+        }
+        // Ideally we would set this to a char representing the cell's data type, but I didn't find an easy way to do it
+        return "identified "+guess;
+    }
+
+    return "incorrect id";
 }
 
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-platform main function

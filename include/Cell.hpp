@@ -2,8 +2,10 @@
 #define CISC220FINAL_UNIT_H
 
 #include <iostream>
+#include <vector>
 
 using std::string;
+using std::vector;
 
 class Structure;
 class Board;
@@ -19,11 +21,13 @@ public:
     Cell();
     Cell(string data, Structure *s, bool revealed, int lc);
     ~Cell();
-    void reveal(); // show pointer in terminal and update reveal
+    int reveal(); // show pointer in terminal and update reveal
     string getData();
     bool getRevealed();
-    void idStructure(string input);
-    void revealParent(Structure *parent);
+    vector<string> revealParent();
+    string getId();
+    vector<Cell*> getSiblings();
+    int getLoc();
 };
 
 #endif //CISC220FINAL_UNIT_H

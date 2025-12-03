@@ -53,7 +53,7 @@ void Board::generateDefault() {
     Heap* heap2 = new Heap(15,0x2B, {"asparagus", "cloud", "green", "is", "goat", "horse", "zebra", "pony", "opera", "zylephone", "salsa","original", "salt", "zoo", "zipper"});
     Graph* graph1 = new Graph(16,0x10, {{0, -1, 1,1}, {-1, 0,1,1}, {1,1,0,1}, {1,1,1,0}});
     Graph* graph2 = new Graph(25, 0x72,{{0,10,-1,2,-1},{-1,0,4,-1,-1},{-1,1,0,-1,5},{-1,-1,3,0,-1},{-1,-1,-1,-1,0}});
-    BST* bst1  = new BST(33, 0x4D,{new BSTNode("movie",0x4D, "0xB2", "0x94"),
+    BST* bst1  = new BST(33, 0x4D,{new BSTNode( "movie",0x4D, "0xB2", "0x94"),
         new BSTNode("dolphin", 0xB2, "null", "0xEE"),
         new BSTNode("horse", 0xEE,"null", "0xF1"),
         new BSTNode("mosquito", 0xF1,"0xF4", "null"),
@@ -189,4 +189,3 @@ int Board::getNumRevealed() {
 int Board::incrementNumRevealed() {
     return num_revealed++;
 }
-

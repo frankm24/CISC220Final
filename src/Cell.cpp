@@ -19,8 +19,10 @@ Cell::~Cell() {
  // not sure if this is necessary yet
 }
 
-void Cell::reveal() {
+int Cell::reveal() {
+    if (isRevealed) return 0;
     isRevealed = true;
+    return 1;
 }
 
 string Cell::getData() {
@@ -32,18 +34,25 @@ bool Cell::getRevealed() {
     return isRevealed;
 }
 
-void Cell::revealParent(Structure* parent) {
-    for (int i =0; i < parent->size; i++) {
-        parent->members[i]->reveal();
-    }
+string Cell::getId() {
+    return parent->getId();
 }
 
-void Cell::idStructure(string input) {
-    string temp = input;
-    std::transform(temp.begin(), temp.end(), temp.begin(),
-               [](unsigned char c){ return std::tolower(c); });
-    boost::trim(temp);
-    if (temp==parent->id) {
-        revealParent(parent);
-    }
+int Cell::getLoc() {
+    return loc;
+}
+
+// vector<string> Cell::revealParent() {
+//     int newRevealed = 0;
+//     vector<string> out;
+//     for (int i =0; i < parent->size; i++) {
+//         if (parent->members[i]->reveal()) newRevealed++;
+//         out.push_back(convertToHex(loc)+" data: "+data+"\n");
+//     }
+//     out.insert(out.begin(), to_string(newRevealed));
+//     return out;
+// }
+
+vector<Cell*> Cell::getSiblings() {
+    return parent->members;
 }
