@@ -14,7 +14,7 @@ using std::endl;
 Board::Board() {
     //    srand(static_cast<unsigned>(time(0))); // this is for randomizing the seed at each run so that the random generated Boards aren't always generated the same
     my_player = Player(); //selected player on local machine
-    num_revealed = 1;
+    num_revealed = 0;
     for (int i = 0; i<256; i++) {
         grid[i] = Cell();
     }
@@ -50,7 +50,7 @@ Board::~Board(){
 
 void Board::generateDefault() {
     Heap* heap1 = new Heap(16,0xCB, {"99", "23", "67", "7", "19", "18", "48", "3", "2", "5", "11", "9", "10", "31", "42", "1"});
-    Heap* heap2 = new Heap(15,0x2B, {"asparagus", "cloud", "green", "is", "goat", "horse", "zebra", "pony", "opera", "zylephone", "salsa","original", "salt", "zoo", "zipper"});
+    Heap* heap2 = new Heap(15,0x2B, {"asparagus", "cloud", "green", "is", "goat", "horse", "zebra", "pony", "opera", "xylophone", "salsa","original", "salt", "zoo", "zipper"});
     Graph* graph1 = new Graph(16,0x10, {{0, -1, 1,1}, {-1, 0,1,1}, {1,1,0,1}, {1,1,1,0}});
     Graph* graph2 = new Graph(25, 0x72,{{0,10,-1,2,-1},{-1,0,4,-1,-1},{-1,1,0,-1,5},{-1,-1,3,0,-1},{-1,-1,-1,-1,0}});
     BST* bst1  = new BST(33, 0x4D,{new BSTNode( "movie",0x4D, "0xB2", "0x94"),
@@ -103,7 +103,7 @@ void Board::generateDefault() {
         {"square", "circle"}},
         {"0x0C", "0x0E", "0x20", "0x5F", "0x6D"});
     Matrix* matrx3 = new Matrix(25,0xF7, 5,4,{
-        {"l", "a", "p", "s"},
+        {"c", "a", "p", "s"},
         {"c","a","t","s"},
         {"r", "a", "i", "n"},
         {"h", "o", "p", "e"},
@@ -120,7 +120,6 @@ void Board::generateDefault() {
     structures.push_back(matrx1);
     structures.push_back(matrx2);
     structures.push_back(matrx3);
-    cout<<"board exists but not popuated"<<endl;
     int gridCount = 0;
     for (Structure* structure : structures) {
         for (int i = 0; i < structure->size; i++) {
@@ -130,8 +129,6 @@ void Board::generateDefault() {
             }
         }
     }
-    printBoard();
-    cout<<"printed!!"<<endl;
 }
 
 void Board::generateBoard() {

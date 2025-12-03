@@ -26,6 +26,10 @@ std::string convertToLower(std::string original) {
                    [](unsigned char c){ return std::tolower(c); });
     return original;
 }
+std::string removeSpaces(std::string original) {
+    original.erase(std::remove_if(original.begin(), original.end(), ::isspace), original.end());
+    return original;
+}
 
 std::string getAssetPath(const std::string &relative) {
     const char *base = SDL_GetBasePath();
@@ -73,14 +77,15 @@ void spOnClick(AppState *state) {
 
 std::string parseCommand(AppState* state, std::string command) {
     command=convertToLower(command);
+    command=removeSpaces(command);
     std::cout<< command << std::endl;
+    if (command=="quit"|| command=="q") exit(0);
     if (command.length() < 3) {
         return "invalid input";
     } else {
         if (command.substr(0,3) == "loc") {
-            if (!(command.length() == 5 || command.length()==8)) return "invalid loc command";
+            if (!(command.length() == 5 || command.length()==8)) return "invalid loc";
             if (command.substr(3,2) == "++") {
-                std::cout<<state->board->getPlayer().getLocation()<<std::endl;
                 return movePlayer(state, state->board->getPlayer().getLocation()+1); // not sure how we are getting current other than from state
             }
             else if (command.substr(3,2) == "--") {
@@ -89,10 +94,12 @@ std::string parseCommand(AppState* state, std::string command) {
                 // DOES NOT HANDLE an invalid HEX input
                 return movePlayer(state,std::stoi(command.substr(6),nullptr,16));
             }else {
-                return "invalid loc command";
+                return "invalid loc";
             }
         } else if (command.substr(0,2) == "id") {
-            return idStructure(state, command.substr(3)); // <- handles comparing
+            std::string guess =command.substr(2);
+            if (guess != "heap" && guess!="matrix" && guess!="graph" && guess!="bst" && guess!="dll") return "invalid id";
+            return idStructure(state, guess); // <- handles comparing
             //returns a string that will either say successful and reveal or failure
             // return "id";
         } else {
@@ -113,10 +120,13 @@ std::string revealCell(AppState *state, int index) {
     state->board->getGrid()[index].reveal();
     state->board->incrementNumRevealed();
     state->sp_menu_els[(std::ceil((256.0-index)/16)*16-(15-index%16))]->setColor({0,255,0,0});
-    dynamic_cast<TextBox*>(state->sp_menu_els[(std::ceil((256.0-index)/16)*16-(15-index%16))])->setText("A");
+    dynamic_cast<TextBox*>(state->sp_menu_els[(std::ceil((256.0-index)/16)*16-(15-index%16))])->setText(state->board->getGrid()[index].getType());
     std::string y = "0x";
     y.push_back(toHexDigit(index/16));
     y.push_back(toHexDigit(index%16));
+    if (TextBox* element = dynamic_cast<TextBox*>(state->sp_menu_els[303])) {
+        element->setText("squares explored: " + std::to_string(state->board->getNumRevealed()) + "/256");
+    }
 
     return y = y +" data: " + state->board->getGrid()[index].getData();
     // return state->terminal->addLine(y);
@@ -134,20 +144,11 @@ std::string movePlayer(AppState *state, int index) {
         element->setText("moves left: " + std::to_string(state->board->getPlayer().getMoves()));
     }
     std::string out = "";
-    if (!state->board->getGrid()[index].getRevealed()) {
-        if (TextBox* element = dynamic_cast<TextBox*>(state->sp_menu_els[303])) {
-            element->setText("squares explored: " + std::to_string(state->board->getNumRevealed()) + "/256");
-        }
-        out = revealCell(state, index);
-    } else {
-        out = "0x";
-        out.push_back(toHexDigit(index/16));
-        out.push_back(toHexDigit(index%16));
-        out = out +" data: " + state->board->getGrid()[index].getData();
-    }
+    out = revealCell(state, index);
+
     UIElement *cell = state->sp_menu_els[(std::ceil((256.0-old)/16)*16-(15-old%16))];
     if (TextBox* element = dynamic_cast<TextBox*>(cell)) {
-        element->setText("A");
+        element->setText(state->board->getGrid()[old].getType());
         // Ideally we would set this to a char representing the cell's data type, but I didn't find an easy way to do it
     }
     cell = state->sp_menu_els[(std::ceil((256.0-index)/16)*16-(15-index%16))];
@@ -171,9 +172,7 @@ std::string idStructure(AppState *state, std::string guess) {
     if (TextBox* element = dynamic_cast<TextBox*>(state->sp_menu_els[304])) {
         element->setText("moves left: " + std::to_string(state->board->getPlayer().getMoves()));
     }
-    if (TextBox* element = dynamic_cast<TextBox*>(state->sp_menu_els[303])) {
-        element->setText("squares explored: " + std::to_string(state->board->getNumRevealed()) + "/256");
-    }
+
         UIElement *cell = state->sp_menu_els[(std::ceil((256.0-loc)/16)*16-(15-loc%16))];
         if (TextBox* element = dynamic_cast<TextBox*>(cell)) {
             element->setText(":)");
@@ -361,7 +360,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
         .build();
     newstate->main_menu_els.push_back(sp_button);
 
-    revealCell(newstate,0);
+    revealCell(newstate,0);//why doesn't this increment revealed by 1
     std::string out = "0x";
     out.push_back(toHexDigit(0/16));
     out.push_back(toHexDigit(0%16));

@@ -29,6 +29,7 @@ public:
     string getId();
     vector<Cell*> getSiblings();
     int getLoc();
+    string getType();
 };
 
 #endif //CISC220FINAL_UNIT_H
