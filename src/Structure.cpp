@@ -253,12 +253,14 @@ BST::BST(int sz) {
     nodes.push_back(new BSTNode("root data", loc, "0x!!", "0x!!"));
     for (int x = 0; x<3; x++) {
         members.push_back(nodes[0]->members[x]);
+        nodes[0]->members[x]->parent = this;
     }
     for (int i = 1; i < numNodes; i++) {
         //BLARING ISSUE WITH THIS LINE IT ONLY GETS LOCATION FOR LEFT - I will come back and fix it
         nodes.push_back( new BSTNode("random data",stoi(nodes[i-1]->left,nullptr,16),"0x!!", "0x!!"));
         for (int x = 0; x<3; x++) {
             members.push_back(nodes[i]->members[x]);
+            nodes[i]->members[x]->parent = this;
         }
     }
 }
@@ -278,6 +280,7 @@ BST::BST(int sz, vector<BSTNode*> nds, string rt) {
     }    for (int i = 0; i < numNodes; i++) {
         for (int x = 0; x<3; x++) {
             members.push_back(nodes[i]->members[x]);
+            nodes[i]->members[x]->parent = this;
         }
     }
 }
@@ -298,6 +301,7 @@ BST::BST(int sz, int lc, vector<BSTNode*> nds, string rt) {
     }    for (int i = 0; i < numNodes; i++) {
         for (int x = 0; x<3; x++) {
             members.push_back(nodes[i]->members[x]);
+            nodes[i]->members[x]->parent = this;
         }
     }
     nodes[0]->loc = loc;
@@ -393,6 +397,8 @@ DLL::DLL(int sz) {
     nodes.push_back(new DLLNode("root data", loc, "null", nextHex));
     for (int x = 0; x<3; x++) {
         members.push_back(nodes[0]->members[x]);
+        nodes[0]->members[x]->parent = this;
+
     }
     for (int i = 1; i < numNodes-1; i++) {
         //BLARING ISSUE WITH THIS LINE IT ONLY GETS LOCATION FOR LEFT - I will come back and fix it
@@ -402,12 +408,14 @@ DLL::DLL(int sz) {
         nodes.push_back( new DLLNode("random data",stoi(nodes[i-1]->next.substr(2),nullptr,16),prevHex, nextHex));
         for (int x = 0; x<3; x++) {
             members.push_back(nodes[i]->members[x]);
+            nodes[i]->members[x]->parent = this;
         }
     }
     string prevHex = convertToHex(nodes[numNodes-2]->loc);
     nodes.push_back( new DLLNode("random data",stoi(nodes[numNodes-2]->next.substr(2),nullptr,16),prevHex, "null"));
     for (int x = 0; x<3; x++) {
         members.push_back(nodes[numNodes-1]->members[x]);
+        nodes[numNodes-1]->members[x]->parent = this;
     }
 }
 
@@ -428,6 +436,7 @@ DLL::DLL(int sz, vector<DLLNode*> nds, string frst, string lst) {
     for (int i = 0; i < numNodes; i++) {
         for (int x = 0; x<3; x++) {
             members.push_back(nodes[i]->members[x]);
+            nodes[i]->members[x]->parent = this;
         }
     }
 }
@@ -450,6 +459,7 @@ DLL::DLL(int sz,int lc, vector<DLLNode*> nds, string frst, string lst) {
     for (int i = 0; i < numNodes; i++) {
         for (int x = 0; x<3; x++) {
             members.push_back(nodes[i]->members[x]);
+            nodes[i]->members[x]->parent = this;
         }
     }
 }

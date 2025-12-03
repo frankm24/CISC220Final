@@ -42,16 +42,6 @@ int Cell::getLoc() {
     return loc;
 }
 
-// vector<string> Cell::revealParent() {
-//     int newRevealed = 0;
-//     vector<string> out;
-//     for (int i =0; i < parent->size; i++) {
-//         if (parent->members[i]->reveal()) newRevealed++;
-//         out.push_back(convertToHex(loc)+" data: "+data+"\n");
-//     }
-//     out.insert(out.begin(), to_string(newRevealed));
-//     return out;
-// }
 
 vector<Cell*> Cell::getSiblings() {
     return parent->members;

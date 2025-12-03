@@ -16,6 +16,7 @@ public:
     int movePlayer(int loc);
     int getMoves();
     int getLocation();
+    int setMoves(int mvs);
 };
 
 #endif //CISC220FINAL_PLAYER_H

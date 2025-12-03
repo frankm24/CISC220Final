@@ -112,7 +112,6 @@ public:
 class BSTNode : Node {
     friend class BST;
     friend class Board;
-    Structure* parent;
     string left; //0xformat
     string right; //0xformat
 public:

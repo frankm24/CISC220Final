@@ -1,9 +1,12 @@
 #include "SDL3/SDL.h"
 
 #define SDL_MAIN_USE_CALLBACKS
+#include <iostream>
 #include <cmath>
 #include <vector>
 #include <string>
+#include <algorithm>
+#include <cctype>
 
 #include "Board.hpp"
 #include "murphy_util.hpp"
@@ -14,6 +17,15 @@
 std::string movePlayer(AppState *state, int index);
 std::string revealCell(AppState *state, int index);
 std::string idStructure(AppState *state, std::string guess);
+
+
+//sorry guys there should probbaly be a better place for this I just didn't know where
+std::string convertToLower(std::string original) {
+    // Convert the string to lowercase
+    std::transform(original.begin(), original.end(), original.begin(),
+                   [](unsigned char c){ return std::tolower(c); });
+    return original;
+}
 
 std::string getAssetPath(const std::string &relative) {
     const char *base = SDL_GetBasePath();
@@ -60,6 +72,7 @@ void spOnClick(AppState *state) {
 }
 
 std::string parseCommand(AppState* state, std::string command) {
+    command=convertToLower(command);
     std::cout<< command << std::endl;
     if (command.length() < 3) {
         return "invalid input";
@@ -75,7 +88,6 @@ std::string parseCommand(AppState* state, std::string command) {
             } else if (command.substr(3,3)=="=0x") {
                 // DOES NOT HANDLE an invalid HEX input
                 return movePlayer(state,std::stoi(command.substr(6),nullptr,16));
-                // return to_string(std::stoi(command.substr(6),nullptr,16));
             }else {
                 return "invalid loc command";
             }
@@ -91,6 +103,13 @@ std::string parseCommand(AppState* state, std::string command) {
 }
 
 std::string revealCell(AppState *state, int index) {
+    if (state->board->getGrid()[index].getRevealed()) {
+        std::string y = "0x";
+        y.push_back(toHexDigit(index/16));
+        y.push_back(toHexDigit(index%16));
+
+        return y = y +" data: " + state->board->getGrid()[index].getData();
+    }
     state->board->getGrid()[index].reveal();
     state->board->incrementNumRevealed();
     state->sp_menu_els[(std::ceil((256.0-index)/16)*16-(15-index%16))]->setColor({0,255,0,0});
@@ -162,7 +181,10 @@ std::string idStructure(AppState *state, std::string guess) {
         // Ideally we would set this to a char representing the cell's data type, but I didn't find an easy way to do it
         return "identified "+guess;
     }
-
+    state->board->getPlayer().setMoves(state->board->getPlayer().getMoves()-5);
+    if (TextBox* element = dynamic_cast<TextBox*>(state->sp_menu_els[304])) {
+        element->setText("moves left: " + std::to_string(state->board->getPlayer().getMoves()));
+    }
     return "incorrect id";
 }
 

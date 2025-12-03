@@ -13,6 +13,8 @@ class Board;
 class Cell {
     friend class Board;
     friend class Structure;
+    friend class BST;
+    friend class DLL;
     bool isRevealed;
     string data;
     Structure *parent;
@@ -24,7 +26,6 @@ public:
     int reveal(); // show pointer in terminal and update reveal
     string getData();
     bool getRevealed();
-    vector<string> revealParent();
     string getId();
     vector<Cell*> getSiblings();
     int getLoc();

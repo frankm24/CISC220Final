@@ -34,3 +34,8 @@ int Player::getLocation() {
 int Player::getMoves() {
     return moves;
 }
+
+int Player::setMoves(int mvs) {
+    moves = mvs;
+    return moves;
+}

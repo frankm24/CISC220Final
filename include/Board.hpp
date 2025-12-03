@@ -40,7 +40,7 @@ inline string convertToHex(int num) {
 
     string hexString = "0x"+ss.str(); // Get the hexadecimal string
     return hexString;
-
 }
+
 
 #endif //CISC220FINAL_BOARD_H
