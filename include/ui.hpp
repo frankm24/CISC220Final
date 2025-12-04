@@ -224,7 +224,7 @@ public:
    TerminalInput* build();
 };
 
-enum class SceneID { MainMenu, Singleplayer, Tutorial };
+enum class SceneID { MainMenu, Singleplayer, Tutorial, EndMenu };
 
 class UIScene {
 public:
@@ -271,6 +271,20 @@ public:
    void init(UIRenderContext &c, AppState *state) override;
    void draw(UIRenderContext &c, AppState *state) override;
    void handleEvent(const SDL_Event *event, AppState *state) override;
+};
+
+class EndMenuScene : public UIScene {
+   std::vector<UIElement*> elements_;
+   TextBox *explored_;
+   TextBox *result_;
+public:
+   explicit EndMenuScene(AppState *state);
+   ~EndMenuScene();
+   void init(UIRenderContext &c, AppState *state) override;
+   void draw(UIRenderContext &c, AppState *state) override;
+   void handleEvent(const SDL_Event *event, AppState *state) override;
+   void displayCompletion(AppState *state);
+   void displayResult(AppState *state);
 };
 
 

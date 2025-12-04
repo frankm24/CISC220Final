@@ -75,6 +75,11 @@ CommandResult parseCommandLogic(AppState* state, std::string command) {
         result.idLoc = loc;
         result.idSiblings = siblings;
         result.message = msg;
+        if (state->board->getPlayer().getMoves()<=0) {
+            state->current_scene = SceneID::EndMenu;
+            UIRenderContext ctx = UIRenderContext(state->renderer, state->ui_font, state->rdpi_scale);
+            state->scenes[state->current_scene]->init(ctx, state);
+        }
         return result;
     }
     result.message = "invalid input";
@@ -96,6 +101,12 @@ std::string revealCellLogic(AppState *state, int index) {
     y.push_back(toHexDigit(index/16));
     y.push_back(toHexDigit(index%16));
 
+    if (state->board->getNumRevealed()>=256) {
+        state->current_scene = SceneID::EndMenu;
+        UIRenderContext ctx = UIRenderContext(state->renderer, state->ui_font, state->rdpi_scale);
+        state->scenes[state->current_scene]->init(ctx, state);
+    }
+
     return y = y +" data: " + state->board->getGrid()[index].getData();
     // return state->terminal->addLine(y);
 }
@@ -110,6 +121,11 @@ std::string movePlayerLogic(AppState *state, int index) {
     }
     std::string out = "";
     out = revealCellLogic(state, index);
+    if (state->board->getPlayer().getMoves()<=0) {
+        state->current_scene = SceneID::EndMenu;
+        UIRenderContext ctx = UIRenderContext(state->renderer, state->ui_font, state->rdpi_scale);
+        state->scenes[state->current_scene]->init(ctx, state);
+    }
 
     return out;
 }

@@ -5,6 +5,7 @@
 #ifndef CISC220FINAL_GAME_LOGIC_HPP
 #define CISC220FINAL_GAME_LOGIC_HPP
 #include <string>
+#include <vector>
 
 #include "AppState.hpp"
 

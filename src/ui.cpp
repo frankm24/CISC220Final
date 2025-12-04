@@ -3,6 +3,9 @@
 //
 
 #include "ui.hpp"
+
+#include <cmath>
+
 #include "util.hpp"
 #include "AppState.hpp"
 #include "Board.hpp"
@@ -549,6 +552,10 @@ void tutOnClick(AppState *state) {
     SDL_StartTextInput(state->window);
 }
 
+void exitOnClick(AppState *state) {
+    exit(0);
+}
+
 MainMenuScene::MainMenuScene(AppState *state) {
     TextBox *title = TextBoxBuilder()
     .position(0, 0.2)
@@ -910,7 +917,6 @@ void SingleplayerScene::idStructureUI(AppState *state, bool success, int loc, st
         }
     }
     move_counter_->setText("moves left: " + std::to_string(state->board->getPlayer().getMoves()));
-
 }
 
 std::string SingleplayerScene::onCommandEntered(AppState *state, std::string cmd) {
@@ -925,4 +931,150 @@ std::string SingleplayerScene::onCommandEntered(AppState *state, std::string cmd
         movePlayerUI(state, res.newLoc, res.oldLoc);
     }
     return res.message;
+}
+
+EndMenuScene::EndMenuScene(AppState *state) {
+    TextBox *game_over = TextBoxBuilder()
+        .position(.42, 0.05)
+        .size(.2,.2)
+        .backgroundColor({0,0,0,255})
+        .text("Game Over")
+        .textColor({255, 255, 255, 255})
+        .build();
+    elements_.push_back(game_over);
+
+    TextBox *explored = TextBoxBuilder()
+        .position(.4, 0.35)
+        .size(.2,.06)
+        .backgroundColor({0,0,0,255})
+        .text("Completion Percentage: " + std::to_string(state->board->getNumRevealed()/256) + "%")
+        .textColor({255, 255, 255, 255})
+        .build();
+    elements_.push_back(explored);
+    explored_ = explored;
+
+    TextBox *result = TextBoxBuilder()
+        .position(.42, 0.45)
+        .size(.2,.1)
+        .backgroundColor({0,0,0,255})
+        .text("Incredibly Lame :(")
+        .textColor({255, 0, 0, 255})
+        .build();
+    elements_.push_back(result);
+    result_ = result;
+
+    Button *quit = ButtonBuilder()
+        .position(0.1, 0.7)
+        .size(.3, 0.1)
+        .backgroundColor({100, 0, 0, 255})
+        .text("Quit")
+        .textColor({255, 255, 255, 255})
+        .hoverColor({200, 200, 100, 255})
+        .onClick(exitOnClick)
+        .build();
+    elements_.push_back(quit);
+
+    Button *again = ButtonBuilder()
+        .position(0.6, 0.7)
+        .size(.3, 0.1)
+        .backgroundColor({100, 0, 0, 255})
+        .text("Again")
+        .textColor({255, 255, 255, 255})
+        .hoverColor({200, 200, 100, 255})
+        .onClick(exitOnClick)
+        .build();
+    elements_.push_back(again);
+}
+
+EndMenuScene::~EndMenuScene() {
+    for (UIElement *el : elements_) {
+        delete el;
+    }
+}
+
+void EndMenuScene::init(UIRenderContext &c, AppState *state) {
+    UIRenderContext ctx = UIRenderContext(state->renderer, state->ui_font, state->rdpi_scale);
+    int drawable_w, drawable_h;
+    SDL_GetRenderOutputSize(state->renderer, &drawable_w, &drawable_h);
+    displayCompletion(state);
+    displayResult(state);
+    for (UIElement *el : elements_) {
+        el->computeBounds(drawable_w, drawable_h);
+        el->updateCache(ctx);
+    }
+}
+
+void EndMenuScene::draw(UIRenderContext &c, AppState *state) {
+    for (UIElement *el : elements_) {
+        if (el->isVisible()) el->draw(c);
+        if (Button* btn = dynamic_cast<Button*>(el)) {
+            btn->updateEffect(state->mouse_x, state->mouse_y);
+        }
+    }
+}
+
+void EndMenuScene::handleEvent(const SDL_Event *event, AppState *state) {
+    switch (event->type) {
+        case SDL_EVENT_MOUSE_MOTION: {
+            for (UIElement *el : elements_) {
+                if (!el->isVisible()) continue;
+                el->onMouseMotion(state->mouse_x, state->mouse_y);
+            }
+            break;
+        }
+        case SDL_EVENT_WINDOW_RESIZED:
+        case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED: {
+            int drawable_w, drawable_h;
+            SDL_GetRenderOutputSize(state->renderer, &drawable_w, &drawable_h);
+            UIRenderContext ctx = UIRenderContext(state->renderer, state->ui_font, state->rdpi_scale);
+            for (UIElement *el : elements_) {
+                el->computeBounds(drawable_w, drawable_h);
+                el->updateCache(ctx);
+            }
+            break;
+        }
+        case SDL_EVENT_MOUSE_BUTTON_DOWN: {
+            for (UIElement *el : elements_) {
+                if (!el->isVisible()) continue;
+                el->onMouseDown(state->mouse_x, state->mouse_y, state);
+            }
+            break;
+        }
+        case SDL_EVENT_MOUSE_BUTTON_UP: {
+            for (UIElement *el : elements_) {
+                if (!el->isVisible()) continue;
+                el->onMouseUp(state->mouse_x, state->mouse_y, state);
+            }
+            break;
+        }
+        default:
+            break;
+    }
+}
+
+void EndMenuScene::displayCompletion(AppState *state) {
+    explored_->setText("Completion Percentage: " + std::to_string((state->board->getNumRevealed()/256.0)*100) + "%");
+}
+
+void EndMenuScene::displayResult(AppState *state) {
+    float result = state->board->getNumRevealed()/256.0*100;
+    if (result< 5) {
+        result_->setText("Incredibly Lame :(");
+    } else if (result< 20) {
+        result_->setText("How Dull :|");
+    } else if (result< 50) {
+        result_->setText("OK...");
+    } else if (result>=69 && result <70) {
+        result_->setText("Nice");
+    } else if (result< 75) {
+        result_->setText("Now you're cooking");
+    } else if (result< 90) {
+        result_->setText("Woohoo!! :)");
+    } else if (result< 100) {
+        result_->setText("Hope you aren't a perfectionist");
+    } else if (result== 100) {
+        result_->setText("Perfect.");
+    } else {
+        result_->setText("How???");
+    }
 }
