@@ -33,10 +33,26 @@ CommandResult parseCommandLogic(AppState* state, std::string command) {
         int newLoc = oldLoc;
 
         if (command.substr(3, 2) == "++") {
+            if (oldLoc + 1 > 0xFF) {
+                result.message = "out of bounds";
+                return result;
+            }
             newLoc = oldLoc + 1;
         } else if (command.substr(3, 2) == "--") {
+            if (oldLoc - 1 < 0) {
+                result.message = "out of bounds";
+                return result;
+            }
             newLoc = oldLoc - 1;
         } else if (command.substr(3, 3) == "=0x") {
+            int destination;
+            try {
+                destination = std::stoi(command.substr(6), nullptr, 16);
+            }
+            catch (const std::invalid_argument& e) {
+                result.message = "invalid loc";
+                return result;
+            }
             newLoc = std::stoi(command.substr(6), nullptr, 16);
         } else {
             result.message = "invalid loc";
