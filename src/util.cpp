@@ -4,6 +4,7 @@
 
 #include "../include/util.hpp"
 
+#include <algorithm>
 #include <string>
 
 #include "SDL3/SDL_pixels.h"

@@ -224,7 +224,7 @@ public:
    TerminalInput* build();
 };
 
-enum class SceneID { MainMenu, Singleplayer };
+enum class SceneID { MainMenu, Singleplayer, EndMenu };
 
 class UIScene {
 public:
@@ -261,6 +261,20 @@ private:
    void movePlayerUI(AppState *state, int index, int old);
    void idStructureUI(AppState *state, bool success, int loc, std::vector<Cell*> siblings);
    std::string onCommandEntered(AppState *state, std::string cmd);
+};
+
+class EndMenuScene : public UIScene {
+   std::vector<UIElement*> elements_;
+   TextBox *explored_;
+   TextBox *result_;
+public:
+   explicit EndMenuScene(AppState *state);
+   ~EndMenuScene();
+   void init(UIRenderContext &c, AppState *state) override;
+   void draw(UIRenderContext &c, AppState *state) override;
+   void handleEvent(const SDL_Event *event, AppState *state) override;
+   void displayCompletion(AppState *state);
+   void displayResult(AppState *state);
 };
 
 

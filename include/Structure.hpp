@@ -5,6 +5,7 @@
 #include <sstream>
 #include "Cell.hpp"
 #include "Board.hpp"
+#include <cmath>
 #include <boost/algorithm/string.hpp>
 class DLLNode;
 class BSTNode;

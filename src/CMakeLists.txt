@@ -13,7 +13,7 @@ add_executable(CISC220Final main.cpp
         ../include/Board.hpp
         ../include/AppState.hpp
         game_logic.cpp
-        game_logic.hpp
+        ../include/game_logic.hpp
 )
 target_include_directories(CISC220Final PRIVATE ../include
         ../external/boost_1_89_0
