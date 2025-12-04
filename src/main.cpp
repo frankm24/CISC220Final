@@ -82,6 +82,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
     newstate->board = new Board();
     newstate->scenes[SceneID::MainMenu] = new MainMenuScene(newstate);
     newstate->scenes[SceneID::Singleplayer] = new SingleplayerScene(newstate);
+    newstate->scenes[SceneID::Tutorial] = new TutorialScene(newstate);
 
     return SDL_APP_CONTINUE;
 }

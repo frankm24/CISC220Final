@@ -542,6 +542,13 @@ void spOnClick(AppState *state) {
     SDL_StartTextInput(state->window);
 }
 
+void tutOnClick(AppState *state) {
+    state->current_scene = SceneID::Tutorial;
+    UIRenderContext ctx = UIRenderContext(state->renderer, state->ui_font, state->rdpi_scale);
+    state->scenes[SceneID::Tutorial]->init(ctx, state);
+    SDL_StartTextInput(state->window);
+}
+
 MainMenuScene::MainMenuScene(AppState *state) {
     TextBox *title = TextBoxBuilder()
     .position(0, 0.2)
@@ -562,6 +569,17 @@ MainMenuScene::MainMenuScene(AppState *state) {
         .onClick(spOnClick)
         .build();
     elements_.push_back(sp_button);
+
+    Button *tut_button = ButtonBuilder()
+        .position(0, 0.65)
+        .size(1, 0.1)
+        .backgroundColor({0, 0, 100, 255})
+        .text("Tutorial")
+        .textColor({255, 255, 255, 255})
+        .hoverColor({200, 200, 100, 255})
+        .onClick(tutOnClick)
+        .build();
+    elements_.push_back(tut_button);
 }
 
 MainMenuScene::~MainMenuScene() {
@@ -627,6 +645,48 @@ void MainMenuScene::handleEvent(const SDL_Event *event, AppState *state) {
             break;
     }
 }
+
+TutorialScene::TutorialScene(AppState *state) {
+    TextBox *header = TextBoxBuilder()
+        .position(0.1, 0.2)
+        .size(.5, 0.05)
+        .backgroundColor({0, 0, 0, 255})
+        .text("Welcome to Memsweeper")
+        .textColor({255, 255, 255, 255})
+        .alignX(TextAlignment::Left)
+        .build();
+    elements_.push_back(header);
+}
+
+TutorialScene::~TutorialScene() {
+    for (UIElement *el : elements_) {
+        delete el;
+    }
+}
+
+void TutorialScene::init(UIRenderContext &c, AppState *state) {
+    UIRenderContext ctx = UIRenderContext(state->renderer, state->ui_font, state->rdpi_scale);
+    int drawable_w, drawable_h;
+    SDL_GetRenderOutputSize(state->renderer, &drawable_w, &drawable_h);
+    for (UIElement *el : elements_) {
+        el->computeBounds(drawable_w, drawable_h);
+        el->updateCache(ctx);
+    }
+}
+
+void TutorialScene::draw(UIRenderContext &c, AppState *state) {
+    for (UIElement *el : elements_) {
+        if (el->isVisible()) el->draw(c);
+        if (Button* btn = dynamic_cast<Button*>(el)) {
+            btn->updateEffect(state->mouse_x, state->mouse_y);
+        }
+    }
+}
+
+void TutorialScene::handleEvent(const SDL_Event *event, AppState *state) {
+
+}
+
 
 SingleplayerScene::SingleplayerScene(AppState *state) {
     TextBox *board_bkg = TextBoxBuilder()
@@ -850,6 +910,7 @@ void SingleplayerScene::idStructureUI(AppState *state, bool success, int loc, st
         }
     }
     move_counter_->setText("moves left: " + std::to_string(state->board->getPlayer().getMoves()));
+
 }
 
 std::string SingleplayerScene::onCommandEntered(AppState *state, std::string cmd) {

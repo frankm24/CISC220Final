@@ -224,7 +224,7 @@ public:
    TerminalInput* build();
 };
 
-enum class SceneID { MainMenu, Singleplayer };
+enum class SceneID { MainMenu, Singleplayer, Tutorial };
 
 class UIScene {
 public:
@@ -238,7 +238,7 @@ class MainMenuScene : public UIScene {
    std::vector<UIElement*> elements_;
 public:
    explicit MainMenuScene(AppState *state);
-   ~MainMenuScene();
+   ~MainMenuScene() override;
    void init(UIRenderContext &c, AppState *state) override;
    void draw(UIRenderContext &c, AppState *state) override;
    void handleEvent(const SDL_Event *event, AppState *state) override;
@@ -252,7 +252,7 @@ class SingleplayerScene: public UIScene {
    TextBox *move_counter_;
 public:
    explicit SingleplayerScene(AppState *state);
-   ~SingleplayerScene();
+   ~SingleplayerScene() override;
    void init(UIRenderContext &c, AppState *state) override;
    void draw(UIRenderContext &c, AppState *state) override;
    void handleEvent(const SDL_Event *event, AppState *state) override;
@@ -261,6 +261,16 @@ private:
    void movePlayerUI(AppState *state, int index, int old);
    void idStructureUI(AppState *state, bool success, int loc, std::vector<Cell*> siblings);
    std::string onCommandEntered(AppState *state, std::string cmd);
+};
+
+class TutorialScene : public UIScene {
+   std::vector<UIElement*> elements_;
+public:
+   explicit TutorialScene(AppState *state);
+   ~TutorialScene() override;
+   void init(UIRenderContext &c, AppState *state) override;
+   void draw(UIRenderContext &c, AppState *state) override;
+   void handleEvent(const SDL_Event *event, AppState *state) override;
 };
 
 
