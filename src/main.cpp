@@ -84,7 +84,9 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[]) { // Cross-pl
     newstate->scenes[SceneID::Singleplayer] = new SingleplayerScene(newstate);
     newstate->scenes[SceneID::Tutorial] = new TutorialScene(newstate);
     newstate->scenes[SceneID::EndMenu] = new EndMenuScene(newstate);
-
+    newstate->current_scene = SceneID::MainMenu;
+    UIRenderContext ctx = UIRenderContext(newstate->renderer, newstate->ui_font, newstate->rdpi_scale);
+    newstate->scenes[newstate->current_scene]->init(ctx, newstate);
     return SDL_APP_CONTINUE;
 }
 
