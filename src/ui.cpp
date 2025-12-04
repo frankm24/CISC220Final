@@ -5,6 +5,7 @@
 #include "ui.hpp"
 
 #include <cmath>
+#include <iomanip>
 
 #include "util.hpp"
 #include "AppState.hpp"
@@ -941,6 +942,7 @@ EndMenuScene::EndMenuScene(AppState *state) {
         .text("Game Over")
         .textColor({255, 255, 255, 255})
         .build();
+    title_ = game_over;
     elements_.push_back(game_over);
 
     TextBox *explored = TextBoxBuilder()
@@ -1053,7 +1055,9 @@ void EndMenuScene::handleEvent(const SDL_Event *event, AppState *state) {
 }
 
 void EndMenuScene::displayCompletion(AppState *state) {
-    explored_->setText("Completion Percentage: " + std::to_string((state->board->getNumRevealed()/256.0)*100) + "%");
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(2) << (state->board->getNumRevealed()/256.0)*100 << "%";
+    explored_->setText("Completion Percentage: " + oss.str());
 }
 
 void EndMenuScene::displayResult(AppState *state) {
@@ -1074,6 +1078,7 @@ void EndMenuScene::displayResult(AppState *state) {
         result_->setText("Hope you aren't a perfectionist");
     } else if (result== 100) {
         result_->setText("Perfect.");
+        title_->setText("You win!");
     } else {
         result_->setText("How???");
     }

@@ -277,6 +277,7 @@ class EndMenuScene : public UIScene {
    std::vector<UIElement*> elements_;
    TextBox *explored_;
    TextBox *result_;
+   TextBox *title_;
 public:
    explicit EndMenuScene(AppState *state);
    ~EndMenuScene();
