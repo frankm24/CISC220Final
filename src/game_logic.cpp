@@ -92,7 +92,7 @@ std::string revealCellLogic(AppState *state, int index) {
         y.push_back(toHexDigit(index/16));
         y.push_back(toHexDigit(index%16));
 
-        return y = y +" data: " + state->board->getGrid()[index].getData();
+        return y + " data: " + state->board->getGrid()[index].getData();
     }
     state->board->getGrid()[index].reveal();
     state->board->incrementNumRevealed();

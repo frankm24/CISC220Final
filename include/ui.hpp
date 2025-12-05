@@ -9,6 +9,7 @@
 #include <boost/circular_buffer.hpp>
 
 #include "Cell.hpp"
+#include "game_logic.hpp"
 #include "../external/SDL3_ttf/include/SDL3_ttf/SDL_ttf.h"
 #include "SDL3/SDL_pixels.h"
 
@@ -22,7 +23,7 @@ struct UIRenderContext {
    float dpi_scale;
 };
 
-enum class TextAlignment { Left, Center };
+enum class TextAlignment { Left, Center, Top };
 
 class UIElement {
 protected:
@@ -30,7 +31,11 @@ protected:
    SDL_Color background_color_;
    bool visible_ = true;
    SDL_FRect rect_{};
-   UIElement(float x_scale, float y_scale, float w_scale, float h_scale, SDL_Color background_color);
+   bool has_outline_;
+   SDL_Color outline_color_;
+   bool highlighted_ = false;
+   UIElement(float x_scale, float y_scale, float w_scale, float h_scale, SDL_Color background_color, bool has_outline,
+      SDL_Color outline_color);
 public:
    virtual ~UIElement() = default;
    void computeBounds(int win_w, int win_h);
@@ -38,7 +43,7 @@ public:
    void setVisible(bool is_visible);
    bool isVisible() const;
    void setColor(SDL_Color color);
-
+   void setHighlighted(bool highlight);
    virtual void draw(const UIRenderContext& c) = 0;
    virtual void updateCache(const UIRenderContext& c) = 0;
    virtual void onMouseMotion(int x, int y) {}
@@ -56,8 +61,11 @@ protected:
    float text_w_ = 0, text_h_ = 0;
    int fixed_font_size_;
    TextAlignment text_align_x_;
+   TextAlignment text_align_y_;
+   bool wrap_text_;
    TextBox(float x_scale, float y_scale, float w_scale, float h_scale, SDL_Color background_color, std::string text,
-      SDL_Color text_color, int font_size, TextAlignment text_align_x);
+      SDL_Color text_color, int font_size, TextAlignment text_align_x, bool wrap_text, TextAlignment text_align_y,
+      bool has_outline, SDL_Color outline_color);
 public:
    ~TextBox() override;
 
@@ -65,6 +73,7 @@ public:
    void updateCache(const UIRenderContext& c) override;
    std::string getText() const;
    void setText(std::string text);
+   void setTextColor(SDL_Color color);
 };
 
 class TextBoxBuilder {
@@ -77,6 +86,10 @@ class TextBoxBuilder {
    float h_scale_ = 0.1f;
    int font_size_ = 0;
    TextAlignment text_align_x_ = TextAlignment::Center;
+   TextAlignment text_align_y_ = TextAlignment::Center;
+   bool wrap_text_ = false;
+   bool has_outline_ = false;
+   SDL_Color outline_color_{0, 0, 0, 0};
 public:
    TextBoxBuilder();
 
@@ -87,6 +100,10 @@ public:
    TextBoxBuilder& size(float w, float h);
    TextBoxBuilder& fontSize(int px);
    TextBoxBuilder& alignX(TextAlignment align_x);
+   TextBoxBuilder& alignY(TextAlignment align_y);
+   TextBoxBuilder& wrapText(bool wrap);
+   TextBoxBuilder& hasOutline(bool outline);
+   TextBoxBuilder& outlineColor(SDL_Color c);
 
    TextBox* build();
 };
@@ -183,6 +200,7 @@ protected:
    Uint64 typing_timestamp_ = 0;
    bool blink_state_ = false;
    bool typing_state_ = false;
+   bool show_cursor_;
    TerminalInput(float x_scale, float y_scale, float w_scale, float h_scale, SDL_Color background_color,
     std::string text, SDL_Color text_color, int font_size, TextAlignment text_align_x, Terminal *terminal);
    AppState* app_state_ = nullptr;
@@ -196,6 +214,7 @@ public:
    void showPrevInput();
    void showNextInput();
    void draw(const UIRenderContext& c) override;
+   void showCursor(bool show);
 };
 
 class TerminalInputBuilder {
@@ -265,12 +284,29 @@ private:
 
 class TutorialScene : public UIScene {
    std::vector<UIElement*> elements_;
+   TerminalInput *terminal_input_;
+   Terminal *terminal_;
+   TextBox *score_counter_;
+   TextBox *move_counter_;
+   TextBox *dialog_box_;
+   TextBox *board_;
+   std::vector<UIElement*> labels_;
+   std::vector<UIElement*> terminal_els;
+   int slide_ = 0;
+   int cmd_counter_ = 0;
 public:
    explicit TutorialScene(AppState *state);
    ~TutorialScene() override;
    void init(UIRenderContext &c, AppState *state) override;
    void draw(UIRenderContext &c, AppState *state) override;
    void handleEvent(const SDL_Event *event, AppState *state) override;
+   void printCellData(AppState *state, int index);
+   void hideCellUI(int index);
+   void dumbMovePlayerUI(AppState *state, int index, int old);
+   void movePlayerUI(AppState *state, int index, int old);
+   void revealCellUI(AppState *state, int index);
+   void idStructureUI(AppState * state, bool success, int loc, const vector<Cell *> &siblings);
+   std::string onCommandEntered(AppState *state, std::string cmd);
 };
 
 class EndMenuScene : public UIScene {
@@ -280,7 +316,7 @@ class EndMenuScene : public UIScene {
    TextBox *title_;
 public:
    explicit EndMenuScene(AppState *state);
-   ~EndMenuScene();
+   ~EndMenuScene() override;
    void init(UIRenderContext &c, AppState *state) override;
    void draw(UIRenderContext &c, AppState *state) override;
    void handleEvent(const SDL_Event *event, AppState *state) override;
