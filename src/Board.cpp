@@ -186,3 +186,7 @@ int Board::getNumRevealed() {
 int Board::incrementNumRevealed() {
     return num_revealed++;
 }
+int Board::setNum_Revealed(int num) {
+    num_revealed = num;
+    return num_revealed;
+}

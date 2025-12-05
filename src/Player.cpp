@@ -40,3 +40,7 @@ int Player::setMoves(int mvs) {
     moves = mvs;
     return moves;
 }
+int Player::setLocatin(int loc) {
+    location = loc;
+    return loc;
+}

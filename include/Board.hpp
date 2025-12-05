@@ -29,6 +29,7 @@ public:
     Player& getPlayer();
     int getNumRevealed();
     int incrementNumRevealed();
+    int setNum_Revealed(int num);
 };
 
 // Helper function:
