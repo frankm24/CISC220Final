@@ -33,14 +33,32 @@ CommandResult parseCommandLogic(AppState* state, std::string command) {
         int newLoc = oldLoc;
 
         if (command.substr(3, 2) == "++") {
+            if (oldLoc + 1 > 0xFF) {
+                result.message = "out of bounds";
+                return result;
+            }
             newLoc = oldLoc + 1;
         } else if (command.substr(3, 2) == "--") {
+            if (oldLoc - 1 < 0) {
+                result.message = "out of bounds";
+                return result;
+            }
             newLoc = oldLoc - 1;
         } else if (command.substr(3, 3) == "=0x") {
+            int destination;
+            int charA = int(command.at(6));
+            int charB = int(command.at(7));
+            std::cout<<charA<< charB<< std::endl;
+            //handles below ascii for 0 and above ascii for f
+            if (charA < 48|| charA > 102 || charB < 48 || charB > 102) {
+                result.message = "invalid loc";
+                return result;
+                //handles ascii values between 9 and a
+            } else if ((charA > 57 && charA < 97 )||(charB > 57 && charB < 97 )) {
+                result.message = "invalid loc";
+                return result;
+            }
             newLoc = std::stoi(command.substr(6), nullptr, 16);
-        } else {
-            result.message = "invalid loc";
-            return result;
         }
 
         // logic: move player (+ reveal inside movePlayerLogic)
