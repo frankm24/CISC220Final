@@ -269,6 +269,7 @@ class SingleplayerScene: public UIScene {
    Terminal *terminal_;
    TextBox *score_counter_;
    TextBox *move_counter_;
+   TextBox *dialog_box_;
 public:
    explicit SingleplayerScene(AppState *state);
    ~SingleplayerScene() override;

@@ -5,6 +5,7 @@
 #include "ui.hpp"
 
 #include <iomanip>
+#include <cmath>
 
 #include "util.hpp"
 #include "AppState.hpp"
@@ -863,6 +864,22 @@ SingleplayerScene::SingleplayerScene(AppState *state) {
     elements_.push_back(moves); // number 304
     move_counter_ = moves;
 
+    dialog_box_ = TextBoxBuilder()  // Thanks for the code Frank :)
+        .position(0.6, 0.7)
+        .size(0.35, 0.25)
+        .backgroundColor({0, 0, 0, 255})
+        .textColor({255, 255, 255, 255})
+        .fontSize(35)
+        .alignX(TextAlignment::Left)
+        .alignY(TextAlignment::Top)
+        .wrapText(true)
+        .hasOutline(true)
+        .outlineColor({255, 255, 255, 255})
+        .build();
+    elements_.push_back(dialog_box_);
+
+    dialog_box_->setText("Commands:      loc(++/--/0x??):  move                id (graph/matrix     /heap/bst/dll):  id                  q:  quit");
+
     revealCellLogic(state,0); //why doesn't this increment revealed by 1
     revealCellUI(state, 0);
     std::string out = "0x";
@@ -1589,7 +1606,7 @@ void EndMenuScene::displayResult(AppState *state) {
     if (result< 5) {
         result_->setText("Incredibly Lame :(");
     } else if (result< 20) {
-        result_->setText("How Dull :|");
+        result_->setText("How Dull...");
     } else if (result< 50) {
         result_->setText("OK...");
     } else if (result>=69 && result <70) {
