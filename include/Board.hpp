@@ -30,6 +30,7 @@ public:
     int getNumRevealed();
     int incrementNumRevealed();
     int setNum_Revealed(int num);
+    Board *newBoard(Board *board);
 };
 
 // Helper function:

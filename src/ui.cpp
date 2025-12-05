@@ -1301,10 +1301,7 @@ void TutorialScene::handleEvent(const SDL_Event *event, AppState *state) {
                     slide_++;
                 } else if (slide_ == 22) {
                     //hard codes fixes for the post tutorial remnants.
-                    //tutorial leaves behind data in state and messes up num_revealed
-                    state->board->getPlayer().setLocatin(0);
-                    state->board->getPlayer().setMoves(50);
-                    state->board->setNum_Revealed(1); //resets to 1, but doesn't update anymore
+                    state->board = state->board->newBoard(state->board);
                     state->current_scene = SceneID::MainMenu;
                     this->~TutorialScene();
                     new (this) TutorialScene(state);

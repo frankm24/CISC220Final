@@ -190,3 +190,9 @@ int Board::setNum_Revealed(int num) {
     num_revealed = num;
     return num_revealed;
 }
+
+Board *Board::newBoard(Board *board) {
+    delete board;
+    board = new Board();
+    return board;
+}
